@@ -20,6 +20,7 @@ import java.nio.file.Paths
 @Field final int NGRAM_BIGRAM = 1
 @Field final int NGRAM_TRIGRAM = 2
 
+
 // ----------------------------------------------------------------
 // --- DATA STRUCTURES ---
 // ----------------------------------------------------------------
