@@ -1,4 +1,4 @@
-package org.tdl.pwg
+package org.tdl.pwg.gemini
 
 import groovy.transform.Field
 import groovy.transform.Canonical
@@ -574,7 +574,7 @@ def validateModel(Model model, boolean requireSentenceStructure) {
     }
 
     if (errors) {
-        throw new ModelValidationException("org.tdl.pwg.org.tdl.pwg.Model validation failed:\n  - ${errors.join('\n  - ')}")
+        throw new ModelValidationException("org.tdl.pwg.org.tdl.pwg.gemini.Model validation failed:\n  - ${errors.join('\n  - ')}")
     }
 }
 
@@ -874,7 +874,7 @@ try {
     def requireSentenceStructure = (cmdArgs.mode == '-s')
     println "✅ Analysis complete. Validating model..."
     validateModel(model, requireSentenceStructure)
-    println "✅ org.tdl.pwg.org.tdl.pwg.Model validation passed."
+    println "✅ org.tdl.pwg.org.tdl.pwg.gemini.Model validation passed."
 
     printStatistics(model, cmdArgs.mode == '-s')
 

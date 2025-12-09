@@ -62,7 +62,7 @@ class GenerationException extends RuntimeException {
 // --- Command Line Parsing ---
 
 def parseCommandLine(String[] args) {
-    def result = new CommandLineArgs()
+    def result = new org.tdl.pwg.gemini.CommandLineArgs()
 
     def i = 0
     while (i < args.length) {
@@ -213,7 +213,7 @@ def selectFromWeightedMap(Map<String, Integer> map) {
 
 // --- Proactive Map/List Access ---
 
-def ensureStartTokenMap(Model model, int effLen, String type) {
+def ensureStartTokenMap(org.tdl.pwg.gemini.Model model, int effLen, String type) {
     if (!model.startTokens.containsKey(effLen)) {
         model.startTokens[effLen] = new HashMap<String, Map<String, Integer>>()
     }
@@ -223,7 +223,7 @@ def ensureStartTokenMap(Model model, int effLen, String type) {
     return model.startTokens[effLen][type]
 }
 
-def ensureInnerTokenMap(Model model, int effLen, String prevType) {
+def ensureInnerTokenMap(org.tdl.pwg.gemini.Model model, int effLen, String prevType) {
     if (!model.innerTokens.containsKey(effLen)) {
         model.innerTokens[effLen] = new HashMap<String, Map<String, Integer>>()
     }
@@ -233,7 +233,7 @@ def ensureInnerTokenMap(Model model, int effLen, String prevType) {
     return model.innerTokens[effLen][prevType]
 }
 
-def ensureLastTokenMap(Model model, int effLen, String prevType) {
+def ensureLastTokenMap(org.tdl.pwg.gemini.Model model, int effLen, String prevType) {
     if (!model.lastTokens.containsKey(effLen)) {
         model.lastTokens[effLen] = new HashMap<String, Map<String, Integer>>()
     }
@@ -243,14 +243,14 @@ def ensureLastTokenMap(Model model, int effLen, String prevType) {
     return model.lastTokens[effLen][prevType]
 }
 
-def ensureTransitionMap(Model model, String key) {
+def ensureTransitionMap(org.tdl.pwg.gemini.Model model, String key) {
     if (!model.transitions.containsKey(key)) {
         model.transitions[key] = new HashMap<String, Integer>()
     }
     return model.transitions[key]
 }
 
-def ensureSegmentList(Model model, String state) {
+def ensureSegmentList(org.tdl.pwg.gemini.Model model, String state) {
     if (!model.segmentLengths.containsKey(state)) {
         model.segmentLengths[state] = new ArrayList<Integer>()
     }
@@ -282,7 +282,7 @@ def ensureTrigramMap(Map<Integer, Map<String, Map<String, Integer>>> trigramMode
 def analyzeText(String filePath, int ngramMode) {
     def text = Files.readString(Paths.get(filePath)).toLowerCase()
     def rawTokens = text.split(/\s+/)
-    def model = new Model()
+    def model = new org.tdl.pwg.gemini.Model()
     model.ngramMode = ngramMode
 
     def currentSegmentLen = 0
@@ -412,7 +412,7 @@ def analyzeText(String filePath, int ngramMode) {
 
 // --- Validation ---
 
-def validateModel(Model model, boolean requireSentenceStructure) {
+def validateModel(org.tdl.pwg.gemini.Model model, boolean requireSentenceStructure) {
     def errors = []
 
     if (model.lengthStartStats.isEmpty()) {
@@ -461,16 +461,16 @@ def validateModel(Model model, boolean requireSentenceStructure) {
     }
 
     if (errors) {
-        throw new ModelValidationException("org.tdl.pwg.org.tdl.pwg.Model validation failed:\n  - ${errors.join('\n  - ')}")
+        throw new org.tdl.pwg.gemini.ModelValidationException("org.tdl.pwg.org.tdl.pwg.gemini.Model validation failed:\n  - ${errors.join('\n  - ')}")
     }
 }
 
 // --- Generation ---
 
-def generatePseudoWord(Model model) {
+def generatePseudoWord(org.tdl.pwg.gemini.Model model) {
     def fusedKey = selectFromWeightedMap(model.lengthStartStats)
     if (!fusedKey) {
-        throw new GenerationException("Failed to select word length/type from empty lengthStartStats")
+        throw new org.tdl.pwg.gemini.GenerationException("Failed to select word length/type from empty lengthStartStats")
     }
 
     def parts = fusedKey.split(':')
@@ -484,7 +484,7 @@ def generatePseudoWord(Model model) {
     def startContentMap = model.startTokens[effLen][startType]
     def startContent = selectFromWeightedMap(startContentMap)
     if (!startContent) {
-        throw new GenerationException("Failed to select start token for effLen=${effLen}, type=${startType}")
+        throw new org.tdl.pwg.gemini.GenerationException("Failed to select start token for effLen=${effLen}, type=${startType}")
     }
     tokens << startContent
     tokenContents << startContent
@@ -499,7 +499,7 @@ def generatePseudoWord(Model model) {
             if (!tokenContent) {
                 def lastMap = model.lastTokens[effLen]?[prevType]
                 if (!lastMap || lastMap.isEmpty()) {
-                    throw new GenerationException("No last token data for effLen=${effLen}, prevType=${prevType}")
+                    throw new org.tdl.pwg.gemini.GenerationException("No last token data for effLen=${effLen}, prevType=${prevType}")
                 }
                 tokenContent = selectFromWeightedMap(lastMap)
             }
@@ -508,14 +508,14 @@ def generatePseudoWord(Model model) {
             if (!tokenContent) {
                 def innerMap = model.innerTokens[effLen]?[prevType]
                 if (!innerMap || innerMap.isEmpty()) {
-                    throw new GenerationException("No inner token data for effLen=${effLen}, prevType=${prevType}")
+                    throw new org.tdl.pwg.gemini.GenerationException("No inner token data for effLen=${effLen}, prevType=${prevType}")
                 }
                 tokenContent = selectFromWeightedMap(innerMap)
             }
         }
 
         if (!tokenContent) {
-            throw new GenerationException("Failed to generate token at position ${i} for word length ${len}")
+            throw new org.tdl.pwg.gemini.GenerationException("Failed to generate token at position ${i} for word length ${len}")
         }
 
         tokens << tokenContent
@@ -526,7 +526,7 @@ def generatePseudoWord(Model model) {
     return tokens.join('')
 }
 
-def tryNgramSelection(Model model, int effLen, List<String> tokenContents, boolean isLast, int position) {
+def tryNgramSelection(org.tdl.pwg.gemini.Model model, int effLen, List<String> tokenContents, boolean isLast, int position) {
     if (model.ngramMode == NGRAM_NONE) return null
 
     def tokenContent = null
@@ -561,7 +561,7 @@ def tryNgramSelection(Model model, int effLen, List<String> tokenContents, boole
     return tokenContent
 }
 
-def generateSentences(Model model, int targetSentences) {
+def generateSentences(org.tdl.pwg.gemini.Model model, int targetSentences) {
     def sb = new StringBuilder()
     def sentencesGenerated = 0
     def currentState = "START"
@@ -569,7 +569,7 @@ def generateSentences(Model model, int targetSentences) {
     while (sentencesGenerated < targetSentences) {
         def lenList = model.segmentLengths[currentState]
         if (!lenList || lenList.isEmpty()) {
-            throw new GenerationException("No segment length data for state '${currentState}'")
+            throw new org.tdl.pwg.gemini.GenerationException("No segment length data for state '${currentState}'")
         }
 
         int segLen = lenList[RND.nextInt(lenList.size())]
@@ -584,7 +584,7 @@ def generateSentences(Model model, int targetSentences) {
         }
 
         if (!nextPunctMap || nextPunctMap.isEmpty()) {
-            throw new GenerationException("No transition data for state '${currentState}'")
+            throw new org.tdl.pwg.gemini.GenerationException("No transition data for state '${currentState}'")
         }
 
         def nextPunct = selectFromWeightedMap(nextPunctMap)
@@ -607,13 +607,13 @@ def generateSentences(Model model, int targetSentences) {
     println sb.toString().replaceAll("(.{1,80})\\s+", "\$1\n")
 }
 
-def generateWordList(Model model, int count) {
+def generateWordList(org.tdl.pwg.gemini.Model model, int count) {
     count.times { println generatePseudoWord(model) }
 }
 
 // --- Statistics ---
 
-def printStatistics(Model model, boolean sentenceMode) {
+def printStatistics(org.tdl.pwg.gemini.Model model, boolean sentenceMode) {
     println "\n📊 --- ANALYSIS REPORT ---"
 
     def ngramLabel = ["None", "Bigram", "Trigram"][model.ngramMode]
@@ -747,7 +747,7 @@ try {
     def requireSentenceStructure = (cmdArgs.mode == '-s')
     println "✅ Analysis complete. Validating model..."
     validateModel(model, requireSentenceStructure)
-    println "✅ org.tdl.pwg.org.tdl.pwg.Model validation passed."
+    println "✅ org.tdl.pwg.org.tdl.pwg.gemini.Model validation passed."
 
     printStatistics(model, cmdArgs.mode == '-s')
 
@@ -763,11 +763,11 @@ try {
         println "="*60
     }
 
-} catch (ModelValidationException e) {
+} catch (org.tdl.pwg.gemini.ModelValidationException e) {
     println "❌ MODEL VALIDATION FAILED:"
     println e.message
     System.exit(2)
-} catch (GenerationException e) {
+} catch (org.tdl.pwg.gemini.GenerationException e) {
     println "❌ GENERATION FAILED:"
     println e.message
     System.exit(3)
