@@ -1,7 +1,9 @@
+package org.tdl.pwg
+
 import groovy.transform.Field
+import groovy.transform.Canonical
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.Random
 
 // --- Configuration ---
 
@@ -12,41 +14,116 @@ import java.util.Random
 @Field final Set<String> ALL_PUNCT = TERMINATORS + INTRA_PUNCT
 
 @Field final int MAX_EFF_LEN = 8
-@Field final List<String> SEG_LEN_BUCKETS = ["1", "2", "3", "4-5", "6-8", "9+"]
 
 // N-gram modes
 @Field final int NGRAM_NONE = 0
 @Field final int NGRAM_BIGRAM = 1
 @Field final int NGRAM_TRIGRAM = 2
 
-// --- Data Structures ---
+// ----------------------------------------------------------------
+// --- DATA STRUCTURES ---
+// ----------------------------------------------------------------
 
+/**
+ * Implements O(log N) weighted random selection using cumulative weights and binary search.
+ * Pre-computes cumulative distribution for fast repeated sampling.
+ */
+@Canonical
+class WeightedSelector {
+    final List<String> keys
+    final List<Long> cumulativeWeights
+    final long totalWeight
+
+    WeightedSelector(Map<String, Integer> map) {
+        this.keys = new ArrayList<>()
+        this.cumulativeWeights = new ArrayList<>()
+        long runningTotal = 0L
+
+        map.each { key, weight ->
+            if (weight > 0) {
+                this.keys.add(key)
+                runningTotal += weight
+                this.cumulativeWeights.add(runningTotal)
+            }
+        }
+        this.totalWeight = runningTotal
+    }
+
+    String select(Random rnd) {
+        if (totalWeight <= 0 || keys.isEmpty()) return null
+
+        // Generate random value in range [1, totalWeight]
+        long target = (long) (rnd.nextDouble() * totalWeight) + 1
+
+        // Binary search for first cumulative weight >= target
+        int index = Collections.binarySearch(cumulativeWeights, target)
+
+        if (index < 0) {
+            // binarySearch returns (-(insertion point) - 1) when not found
+            index = -index - 1
+        }
+
+        // Clamp to valid range
+        if (index >= keys.size()) {
+            index = keys.size() - 1
+        }
+
+        return keys[index]
+    }
+
+    boolean isEmpty() {
+        return totalWeight <= 0 || keys.isEmpty()
+    }
+}
+
+/**
+ * Command line arguments container.
+ */
+@Canonical
+class CommandLineArgs {
+    String filePath = null
+    String mode = null      // "-s" or "-w"
+    int count = 0
+    int ngramMode = 0       // NGRAM_NONE, NGRAM_BIGRAM, or NGRAM_TRIGRAM
+    int pruneMinTokens = 0  // Minimum token count (0 = no pruning)
+    boolean valid = false
+    String errorMessage = null
+}
+
+/**
+ * Data model storing all corpus statistics.
+ * Raw count maps are populated during analysis, then selectors are built for O(log N) generation.
+ */
 class Model {
+    // Raw count maps (populated during analysis)
     Map<String, Integer> lengthStartStats = [:]
     Map<Integer, Map<String, Map<String, Integer>>> startTokens = [:]
     Map<Integer, Map<String, Map<String, Integer>>> innerTokens = [:]
     Map<Integer, Map<String, Map<String, Integer>>> lastTokens = [:]
-    Map<String, List<Integer>> segmentLengths = [:]
-    Map<String, Map<String, Integer>> transitions = [:]
-    List<Integer> sentenceLengths = []
-
-    // N-gram models
     Map<Integer, Map<String, Map<String, Integer>>> bigramStart = [:]
     Map<Integer, Map<String, Map<String, Integer>>> bigramInner = [:]
     Map<Integer, Map<String, Map<String, Integer>>> bigramLast = [:]
     Map<Integer, Map<String, Map<String, Integer>>> trigramInner = [:]
     Map<Integer, Map<String, Map<String, Integer>>> trigramLast = [:]
 
-    int ngramMode = 0  // NGRAM_NONE, NGRAM_BIGRAM, or NGRAM_TRIGRAM
-}
+    // Sentence structure
+    Map<String, List<Integer>> segmentLengths = [:]
+    Map<String, Map<String, Integer>> transitions = [:]
+    List<Integer> sentenceLengths = []
 
-class CommandLineArgs {
-    String filePath = null
-    String mode = null      // "-s" or "-w"
-    int count = 0
-    int ngramMode = 0       // NGRAM_NONE, NGRAM_BIGRAM, or NGRAM_TRIGRAM
-    boolean valid = false
-    String errorMessage = null
+    int ngramMode = 0  // 0=none, 1=bigram, 2=trigram
+
+    // Pre-built weighted selectors (populated after analysis for O(log N) lookups)
+    WeightedSelector lengthStartSelector
+    Map<Integer, Map<String, WeightedSelector>> startSelectors = [:]
+    Map<Integer, Map<String, WeightedSelector>> innerSelectors = [:]
+    Map<Integer, Map<String, WeightedSelector>> lastSelectors = [:]
+    Map<Integer, Map<String, WeightedSelector>> bigramStartSelectors = [:]
+    Map<Integer, Map<String, WeightedSelector>> bigramInnerSelectors = [:]
+    Map<Integer, Map<String, WeightedSelector>> bigramLastSelectors = [:]
+    Map<Integer, Map<String, WeightedSelector>> trigramInnerSelectors = [:]
+    Map<Integer, Map<String, WeightedSelector>> trigramLastSelectors = [:]
+    Map<String, WeightedSelector> transitionSelectors = [:]
 }
 
 class ModelValidationException extends RuntimeException {
@@ -57,12 +134,14 @@ class GenerationException extends RuntimeException {
     GenerationException(String message) { super(message) }
 }
 
-// --- Command Line Parsing ---
+// ----------------------------------------------------------------
+// --- COMMAND LINE PARSING ---
+// ----------------------------------------------------------------
 
 def parseCommandLine(String[] args) {
     def result = new CommandLineArgs()
-
     def i = 0
+
     while (i < args.length) {
         def arg = args[i]
 
@@ -76,37 +155,20 @@ def parseCommandLine(String[] args) {
                 break
 
             case '-s':
-                if (i + 1 >= args.length) {
-                    result.errorMessage = "Option -s requires a number argument"
-                    return result
-                }
-                if (result.mode != null) {
-                    result.errorMessage = "Cannot specify both -s and -w"
-                    return result
-                }
-                result.mode = '-s'
-                try {
-                    result.count = args[++i].toInteger()
-                } catch (NumberFormatException e) {
-                    result.errorMessage = "Invalid number for -s: ${args[i]}"
-                    return result
-                }
-                break
-
             case '-w':
                 if (i + 1 >= args.length) {
-                    result.errorMessage = "Option -w requires a number argument"
+                    result.errorMessage = "Option ${arg} requires a number argument"
                     return result
                 }
                 if (result.mode != null) {
                     result.errorMessage = "Cannot specify both -s and -w"
                     return result
                 }
-                result.mode = '-w'
+                result.mode = arg
                 try {
                     result.count = args[++i].toInteger()
                 } catch (NumberFormatException e) {
-                    result.errorMessage = "Invalid number for -w: ${args[i]}"
+                    result.errorMessage = "Invalid number for ${arg}: ${args[i]}"
                     return result
                 }
                 break
@@ -127,6 +189,23 @@ def parseCommandLine(String[] args) {
                 result.ngramMode = NGRAM_TRIGRAM
                 break
 
+            case '-p':
+                if (i + 1 >= args.length) {
+                    result.errorMessage = "Option -p requires a number argument"
+                    return result
+                }
+                try {
+                    result.pruneMinTokens = args[++i].toInteger()
+                } catch (NumberFormatException e) {
+                    result.errorMessage = "Invalid number for -p: ${args[i]}"
+                    return result
+                }
+                if (result.pruneMinTokens < 1) {
+                    result.errorMessage = "Prune value must be at least 1"
+                    return result
+                }
+                break
+
             default:
                 result.errorMessage = "Unknown option: ${arg}"
                 return result
@@ -134,7 +213,6 @@ def parseCommandLine(String[] args) {
         i++
     }
 
-    // Validate required arguments
     if (result.filePath == null) {
         result.errorMessage = "Missing required option: -f <filename>"
         return result
@@ -148,11 +226,19 @@ def parseCommandLine(String[] args) {
         return result
     }
 
+    // Prune option only allowed in word mode
+    if (result.pruneMinTokens > 0 && result.mode != '-w') {
+        result.errorMessage = "Option -p (prune) is only allowed in word mode (-w)"
+        return result
+    }
+
     result.valid = true
     return result
 }
 
-// --- Helper Functions ---
+// ----------------------------------------------------------------
+// --- HELPER FUNCTIONS ---
+// ----------------------------------------------------------------
 
 def getEffectiveLength(int len) {
     Math.min(len, MAX_EFF_LEN)
@@ -168,13 +254,19 @@ def getSegmentLengthBucket(int segLen) {
     return "9+"
 }
 
+/**
+ * Tokenizes a word into alternating consonant/vowel clusters.
+ * Uses Character.isLetter() for robust Unicode support.
+ * Returns list of [type, content] tuples.
+ */
 def tokenizeWordStructure(String word) {
-    def cleanWord = word.findAll { Character.isLetter(it as char) }.join('')
+    // Filter to letters only (handles all Unicode letters)
+    def cleanWord = word.findAll { Character.isLetter(it as char) }.join('').toLowerCase()
     if (!cleanWord) return []
 
     def tokens = []
     def currentType = ''
-    def currentContent = ''
+    def currentContent = new StringBuilder()
 
     cleanWord.each { c ->
         def charStr = c.toString()
@@ -183,62 +275,33 @@ def tokenizeWordStructure(String word) {
 
         if (currentType == '') {
             currentType = charType
-            currentContent = charStr
+            currentContent.append(charStr)
         } else if (charType == currentType) {
-            currentContent += charStr
+            currentContent.append(charStr)
         } else {
-            tokens << [type: currentType, content: currentContent]
+            tokens << [currentType, currentContent.toString()]
             currentType = charType
-            currentContent = charStr
+            currentContent = new StringBuilder().append(charStr)
         }
     }
-    if (currentContent) tokens << [type: currentType, content: currentContent]
+    if (currentContent.length() > 0) {
+        tokens << [currentType, currentContent.toString()]
+    }
     return tokens
 }
 
-def selectFromWeightedMap(Map<String, Integer> map) {
-    if (!map || map.isEmpty()) return null
-    long total = map.values().sum()
-    if (total == 0) return null
-    double r = RND.nextDouble() * total
-    double running = 0.0
-    for (entry in map) {
-        running += entry.value
-        if (running >= r) return entry.key
-    }
-    return map.keySet().last()
-}
+// ----------------------------------------------------------------
+// --- PROACTIVE MAP ACCESS (ensures structure exists) ---
+// ----------------------------------------------------------------
 
-// --- Proactive Map/List Access ---
-
-def ensureStartTokenMap(Model model, int effLen, String type) {
-    if (!model.startTokens.containsKey(effLen)) {
-        model.startTokens[effLen] = new HashMap<String, Map<String, Integer>>()
+def ensureNestedMap(Map<Integer, Map<String, Map<String, Integer>>> parent, int key1, String key2) {
+    if (!parent.containsKey(key1)) {
+        parent[key1] = new HashMap<String, Map<String, Integer>>()
     }
-    if (!model.startTokens[effLen].containsKey(type)) {
-        model.startTokens[effLen][type] = new HashMap<String, Integer>()
+    if (!parent[key1].containsKey(key2)) {
+        parent[key1][key2] = new HashMap<String, Integer>()
     }
-    return model.startTokens[effLen][type]
-}
-
-def ensureInnerTokenMap(Model model, int effLen, String prevType) {
-    if (!model.innerTokens.containsKey(effLen)) {
-        model.innerTokens[effLen] = new HashMap<String, Map<String, Integer>>()
-    }
-    if (!model.innerTokens[effLen].containsKey(prevType)) {
-        model.innerTokens[effLen][prevType] = new HashMap<String, Integer>()
-    }
-    return model.innerTokens[effLen][prevType]
-}
-
-def ensureLastTokenMap(Model model, int effLen, String prevType) {
-    if (!model.lastTokens.containsKey(effLen)) {
-        model.lastTokens[effLen] = new HashMap<String, Map<String, Integer>>()
-    }
-    if (!model.lastTokens[effLen].containsKey(prevType)) {
-        model.lastTokens[effLen][prevType] = new HashMap<String, Integer>()
-    }
-    return model.lastTokens[effLen][prevType]
+    return parent[key1][key2]
 }
 
 def ensureTransitionMap(Model model, String key) {
@@ -255,27 +318,77 @@ def ensureSegmentList(Model model, String state) {
     return model.segmentLengths[state]
 }
 
-def ensureBigramMap(Map<Integer, Map<String, Map<String, Integer>>> bigramModel, int effLen, String key) {
-    if (!bigramModel.containsKey(effLen)) {
-        bigramModel[effLen] = new HashMap<String, Map<String, Integer>>()
+// ----------------------------------------------------------------
+// --- MODEL PRUNING (removes short words from generation) ---
+// ----------------------------------------------------------------
+
+def pruneModel(Model model, int minTokens) {
+    if (minTokens <= 0) return  // No pruning needed
+
+    // Find keys to remove (words with minTokens or fewer tokens)
+    def keysToRemove = model.lengthStartStats.keySet().findAll { fusedKey ->
+        def len = fusedKey.split(':')[0].toInteger()
+        len <= minTokens
     }
-    if (!bigramModel[effLen].containsKey(key)) {
-        bigramModel[effLen][key] = new HashMap<String, Integer>()
+
+    // Check if pruning would remove all keys
+    if (keysToRemove.size() >= model.lengthStartStats.size()) {
+        throw new ModelValidationException(
+                "Pruning with -p ${minTokens} would remove all words. " +
+                        "The corpus has no words with more than ${minTokens} tokens."
+        )
     }
-    return bigramModel[effLen][key]
+
+    // Remove the keys
+    keysToRemove.each { key ->
+        model.lengthStartStats.remove(key)
+    }
+
+    def removedCount = keysToRemove.size()
+    def remainingCount = model.lengthStartStats.size()
+    println "🔧 Pruned ${removedCount} word length categories (tokens ≤ ${minTokens}), ${remainingCount} remaining"
 }
 
-def ensureTrigramMap(Map<Integer, Map<String, Map<String, Integer>>> trigramModel, int effLen, String key) {
-    if (!trigramModel.containsKey(effLen)) {
-        trigramModel[effLen] = new HashMap<String, Map<String, Integer>>()
+// ----------------------------------------------------------------
+// --- SELECTOR BUILDING (converts count maps to O(log N) selectors) ---
+// ----------------------------------------------------------------
+
+def buildModelSelectors(Model model) {
+    // Word length/type selector
+    model.lengthStartSelector = new WeightedSelector(model.lengthStartStats)
+
+    // Helper to build nested selectors from nested count maps
+    def buildNestedSelectors = { Map<Integer, Map<String, Map<String, Integer>>> sourceMap,
+                                 Map<Integer, Map<String, WeightedSelector>> selectorMap ->
+        sourceMap.each { effLen, innerMap ->
+            selectorMap[effLen] = new HashMap<String, WeightedSelector>()
+            innerMap.each { key, weightedMap ->
+                selectorMap[effLen][key] = new WeightedSelector(weightedMap)
+            }
+        }
     }
-    if (!trigramModel[effLen].containsKey(key)) {
-        trigramModel[effLen][key] = new HashMap<String, Integer>()
+
+    // Token selectors
+    buildNestedSelectors(model.startTokens, model.startSelectors)
+    buildNestedSelectors(model.innerTokens, model.innerSelectors)
+    buildNestedSelectors(model.lastTokens, model.lastSelectors)
+
+    // N-gram selectors
+    buildNestedSelectors(model.bigramStart, model.bigramStartSelectors)
+    buildNestedSelectors(model.bigramInner, model.bigramInnerSelectors)
+    buildNestedSelectors(model.bigramLast, model.bigramLastSelectors)
+    buildNestedSelectors(model.trigramInner, model.trigramInnerSelectors)
+    buildNestedSelectors(model.trigramLast, model.trigramLastSelectors)
+
+    // Transition selectors
+    model.transitions.each { key, weightedMap ->
+        model.transitionSelectors[key] = new WeightedSelector(weightedMap)
     }
-    return trigramModel[effLen][key]
 }
 
-// --- Analysis ---
+// ----------------------------------------------------------------
+// --- ANALYSIS ---
+// ----------------------------------------------------------------
 
 def analyzeText(String filePath, int ngramMode) {
     def text = Files.readString(Paths.get(filePath)).toLowerCase()
@@ -286,7 +399,7 @@ def analyzeText(String filePath, int ngramMode) {
     def currentSegmentLen = 0
     def wordsInCurrentSentence = 0
     def previousState = "START"
-    def previousPunctuation = null  // Track for consecutive punctuation filtering
+    def previousPunctuation = null
 
     rawTokens.each { token ->
         if (!token) return
@@ -306,85 +419,79 @@ def analyzeText(String filePath, int ngramMode) {
             def len = structureTokens.size()
             def effLen = getEffectiveLength(len)
 
-            // A. Fused Stats
+            // A. Fused Stats (word length + starting type)
             def firstToken = structureTokens[0]
-            def startType = firstToken.type
+            def startType = firstToken[0]
             def fusedKey = "${len}:${startType}"
             model.lengthStartStats[fusedKey] = (model.lengthStartStats[fusedKey] ?: 0) + 1
 
             // B. Start Token
-            def startContentMap = ensureStartTokenMap(model, effLen, startType)
-            def startContent = firstToken.content
-            startContentMap[startContent] = (startContentMap[startContent] ?: 0) + 1
+            def startContent = firstToken[1]
+            def startMap = ensureNestedMap(model.startTokens, effLen, startType)
+            startMap[startContent] = (startMap[startContent] ?: 0) + 1
 
             // C. Subsequent Tokens
             structureTokens.eachWithIndex { t, i ->
                 if (i > 0) {
-                    def prevType = structureTokens[i-1].type
-                    def prevContent = structureTokens[i-1].content
-                    def content = t.content
-                    def bigramKey = prevContent
-                    def trigramKey = (i >= 2) ? "${structureTokens[i-2].content}:${prevContent}" : null
+                    def prevToken = structureTokens[i - 1]
+                    def prevType = prevToken[0]
+                    def prevContent = prevToken[1]
+                    def content = t[1]
 
-                    if (i == len - 1) {
-                        // LAST TOKEN
-                        def lastMap = ensureLastTokenMap(model, effLen, prevType)
-                        lastMap[content] = (lastMap[content] ?: 0) + 1
+                    // Base token model (type-based)
+                    def baseTokenMap = (i == len - 1) ? model.lastTokens : model.innerTokens
+                    def tokenMap = ensureNestedMap(baseTokenMap, effLen, prevType)
+                    tokenMap[content] = (tokenMap[content] ?: 0) + 1
 
-                        if (ngramMode >= NGRAM_BIGRAM) {
-                            def bigramMap = ensureBigramMap(model.bigramLast, effLen, bigramKey)
-                            bigramMap[content] = (bigramMap[content] ?: 0) + 1
+                    // Bigram modeling
+                    if (ngramMode >= NGRAM_BIGRAM) {
+                        def bigramKey = prevContent
+                        def bigramModel
+                        if (i == len - 1) {
+                            bigramModel = model.bigramLast
+                        } else if (i == 1) {
+                            bigramModel = model.bigramStart
+                        } else {
+                            bigramModel = model.bigramInner
                         }
-                        if (ngramMode >= NGRAM_TRIGRAM && trigramKey) {
-                            def trigramMap = ensureTrigramMap(model.trigramLast, effLen, trigramKey)
-                            trigramMap[content] = (trigramMap[content] ?: 0) + 1
-                        }
-                    } else {
-                        // INNER TOKEN
-                        def innerMap = ensureInnerTokenMap(model, effLen, prevType)
-                        innerMap[content] = (innerMap[content] ?: 0) + 1
+                        def bigramMap = ensureNestedMap(bigramModel, effLen, bigramKey)
+                        bigramMap[content] = (bigramMap[content] ?: 0) + 1
+                    }
 
-                        if (ngramMode >= NGRAM_BIGRAM) {
-                            if (i == 1) {
-                                def bigramMap = ensureBigramMap(model.bigramStart, effLen, bigramKey)
-                                bigramMap[content] = (bigramMap[content] ?: 0) + 1
-                            } else {
-                                def bigramMap = ensureBigramMap(model.bigramInner, effLen, bigramKey)
-                                bigramMap[content] = (bigramMap[content] ?: 0) + 1
-                            }
-                        }
-                        if (ngramMode >= NGRAM_TRIGRAM && trigramKey) {
-                            def trigramMap = ensureTrigramMap(model.trigramInner, effLen, trigramKey)
-                            trigramMap[content] = (trigramMap[content] ?: 0) + 1
-                        }
+                    // Trigram modeling
+                    if (ngramMode >= NGRAM_TRIGRAM && i >= 2) {
+                        def prev2Content = structureTokens[i - 2][1]
+                        def trigramKey = "${prev2Content}:${prevContent}"
+                        def trigramModel = (i == len - 1) ? model.trigramLast : model.trigramInner
+                        def trigramMap = ensureNestedMap(trigramModel, effLen, trigramKey)
+                        trigramMap[content] = (trigramMap[content] ?: 0) + 1
                     }
                 }
             }
             currentSegmentLen++
             wordsInCurrentSentence++
-            previousPunctuation = null  // Reset consecutive punctuation tracker
+            previousPunctuation = null
         }
 
         // --- 2. Analyze Sentence Structure ---
         if (punctuation) {
-            // Filter: Skip if this is consecutive punctuation (no words between)
+            // Filter: Skip consecutive punctuation
             if (previousPunctuation != null && currentSegmentLen == 0) {
-                // Consecutive punctuation - skip recording
                 previousPunctuation = punctuation
                 return
             }
 
             if (currentSegmentLen > 0) {
-                // Record segment length for this state
+                // Record segment length
                 ensureSegmentList(model, previousState).add(currentSegmentLen)
 
-                // Record transition keyed by state AND segment length bucket
+                // Record bucket-specific transition
                 def segLenBucket = getSegmentLengthBucket(currentSegmentLen)
                 def transKey = previousState + "@" + segLenBucket
                 def transMap = ensureTransitionMap(model, transKey)
                 transMap[punctuation] = (transMap[punctuation] ?: 0) + 1
 
-                // Also record state-only fallback transition
+                // Record state-only fallback transition
                 def fallbackMap = ensureTransitionMap(model, previousState)
                 fallbackMap[punctuation] = (fallbackMap[punctuation] ?: 0) + 1
             }
@@ -393,7 +500,7 @@ def analyzeText(String filePath, int ngramMode) {
             previousPunctuation = punctuation
 
             if (TERMINATORS.contains(punctuation)) {
-                // Filter: Only record sentence length if > 0
+                // Filter: Only record non-empty sentences
                 if (wordsInCurrentSentence > 0) {
                     model.sentenceLengths.add(wordsInCurrentSentence)
                 }
@@ -408,12 +515,14 @@ def analyzeText(String filePath, int ngramMode) {
     return model
 }
 
-// --- Validation ---
+// ----------------------------------------------------------------
+// --- VALIDATION ---
+// ----------------------------------------------------------------
 
 def validateModel(Model model, boolean requireSentenceStructure) {
     def errors = []
 
-    if (model.lengthStartStats.isEmpty()) {
+    if (model.lengthStartSelector == null || model.lengthStartSelector.isEmpty()) {
         errors << "No word length statistics found"
     }
 
@@ -423,22 +532,27 @@ def validateModel(Model model, boolean requireSentenceStructure) {
         def startType = parts[1]
         def effLen = getEffectiveLength(len)
 
-        if (!model.startTokens[effLen]?[startType] || model.startTokens[effLen][startType].isEmpty()) {
-            errors << "Missing start tokens for effLen=${effLen}, type=${startType} (fusedKey=${fusedKey}, count=${count})"
+        // Validate start token selector exists
+        def startSelector = model.startSelectors[effLen]?[startType]
+        if (!startSelector || startSelector.isEmpty()) {
+            errors << "Missing start token selector for effLen=${effLen}, type=${startType} (fusedKey=${fusedKey}, count=${count})"
         }
 
+        // Validate last token selector exists (for len > 1)
         if (len > 1) {
             def lastPrevType = ((len % 2) == 0) ? startType : (startType == 'C' ? 'V' : 'C')
-            if (!model.lastTokens[effLen]?[lastPrevType] || model.lastTokens[effLen][lastPrevType].isEmpty()) {
-                errors << "Missing last tokens for effLen=${effLen}, prevType=${lastPrevType} (fusedKey=${fusedKey}, count=${count})"
+            def lastSelector = model.lastSelectors[effLen]?[lastPrevType]
+            if (!lastSelector || lastSelector.isEmpty()) {
+                errors << "Missing last token selector for effLen=${effLen}, prevType=${lastPrevType} (fusedKey=${fusedKey}, count=${count})"
             }
         }
 
+        // Validate inner token selector exists (for len > 2)
         if (len > 2) {
-            def hasC = model.innerTokens[effLen]?['C'] && !model.innerTokens[effLen]['C'].isEmpty()
-            def hasV = model.innerTokens[effLen]?['V'] && !model.innerTokens[effLen]['V'].isEmpty()
-            if (!hasC && !hasV) {
-                errors << "Missing inner tokens for effLen=${effLen} (fusedKey=${fusedKey}, count=${count})"
+            def hasC = model.innerSelectors[effLen]?.get('C')
+            def hasV = model.innerSelectors[effLen]?.get('V')
+            if ((!hasC || hasC.isEmpty()) && (!hasV || hasV.isEmpty())) {
+                errors << "Missing inner token selectors for effLen=${effLen} (fusedKey=${fusedKey}, count=${count})"
             }
         }
     }
@@ -447,26 +561,28 @@ def validateModel(Model model, boolean requireSentenceStructure) {
         if (model.segmentLengths.isEmpty()) {
             errors << "No segment length data found (corpus may lack punctuation)"
         }
-        if (model.transitions.isEmpty()) {
+        if (model.transitionSelectors.isEmpty()) {
             errors << "No transition data found (corpus may lack punctuation)"
         }
 
         model.segmentLengths.keySet().each { state ->
-            if (!model.transitions[state] || model.transitions[state].isEmpty()) {
-                errors << "State '${state}' has segment lengths but no fallback transitions"
+            if (!model.transitionSelectors[state] || model.transitionSelectors[state].isEmpty()) {
+                errors << "State '${state}' has segment lengths but no fallback transition selector"
             }
         }
     }
 
     if (errors) {
-        throw new ModelValidationException("Model validation failed:\n  - ${errors.join('\n  - ')}")
+        throw new ModelValidationException("org.tdl.pwg.org.tdl.pwg.Model validation failed:\n  - ${errors.join('\n  - ')}")
     }
 }
 
-// --- Generation ---
+// ----------------------------------------------------------------
+// --- GENERATION ---
+// ----------------------------------------------------------------
 
 def generatePseudoWord(Model model) {
-    def fusedKey = selectFromWeightedMap(model.lengthStartStats)
+    def fusedKey = model.lengthStartSelector.select(RND)
     if (!fusedKey) {
         throw new GenerationException("Failed to select word length/type from empty lengthStartStats")
     }
@@ -476,52 +592,45 @@ def generatePseudoWord(Model model) {
     def startType = parts[1]
     def effLen = getEffectiveLength(len)
 
-    def tokens = []
     def tokenContents = []
 
-    def startContentMap = model.startTokens[effLen][startType]
-    def startContent = selectFromWeightedMap(startContentMap)
+    // 1. Start Token
+    def startSelector = model.startSelectors[effLen][startType]
+    def startContent = startSelector.select(RND)
     if (!startContent) {
         throw new GenerationException("Failed to select start token for effLen=${effLen}, type=${startType}")
     }
-    tokens << startContent
     tokenContents << startContent
     def prevType = startType
 
+    // 2. Subsequent Tokens
     for (int i = 1; i < len; i++) {
         def requiredType = (prevType == 'C') ? 'V' : 'C'
         def tokenContent = null
 
-        if (i == len - 1) {
-            tokenContent = tryNgramSelection(model, effLen, tokenContents, true, i)
-            if (!tokenContent) {
-                def lastMap = model.lastTokens[effLen]?[prevType]
-                if (!lastMap || lastMap.isEmpty()) {
-                    throw new GenerationException("No last token data for effLen=${effLen}, prevType=${prevType}")
-                }
-                tokenContent = selectFromWeightedMap(lastMap)
+        // Try N-gram selection first
+        tokenContent = tryNgramSelection(model, effLen, tokenContents, (i == len - 1), i)
+
+        // Fallback to type-based selection
+        if (!tokenContent) {
+            def baseSelectors = (i == len - 1) ? model.lastSelectors : model.innerSelectors
+            def fallbackSelector = baseSelectors[effLen]?[prevType]
+            if (!fallbackSelector || fallbackSelector.isEmpty()) {
+                def mapName = (i == len - 1) ? "last" : "inner"
+                throw new GenerationException("No ${mapName} token data for effLen=${effLen}, prevType=${prevType}")
             }
-        } else {
-            tokenContent = tryNgramSelection(model, effLen, tokenContents, false, i)
-            if (!tokenContent) {
-                def innerMap = model.innerTokens[effLen]?[prevType]
-                if (!innerMap || innerMap.isEmpty()) {
-                    throw new GenerationException("No inner token data for effLen=${effLen}, prevType=${prevType}")
-                }
-                tokenContent = selectFromWeightedMap(innerMap)
-            }
+            tokenContent = fallbackSelector.select(RND)
         }
 
         if (!tokenContent) {
             throw new GenerationException("Failed to generate token at position ${i} for word length ${len}")
         }
 
-        tokens << tokenContent
         tokenContents << tokenContent
         prevType = requiredType
     }
 
-    return tokens.join('')
+    return tokenContents.join('')
 }
 
 def tryNgramSelection(Model model, int effLen, List<String> tokenContents, boolean isLast, int position) {
@@ -529,30 +638,30 @@ def tryNgramSelection(Model model, int effLen, List<String> tokenContents, boole
 
     def tokenContent = null
 
-    // Try trigram (only if trigram mode enabled and we have 2+ previous tokens)
+    // Try Trigram (highest priority)
     if (model.ngramMode >= NGRAM_TRIGRAM && tokenContents.size() >= 2) {
         def trigramKey = "${tokenContents[-2]}:${tokenContents[-1]}"
-        def trigramModel = isLast ? model.trigramLast : model.trigramInner
-        def trigramMap = trigramModel[effLen]?[trigramKey]
-        if (trigramMap && !trigramMap.isEmpty()) {
-            tokenContent = selectFromWeightedMap(trigramMap)
+        def trigramSelectors = isLast ? model.trigramLastSelectors : model.trigramInnerSelectors
+        def trigramSelector = trigramSelectors[effLen]?[trigramKey]
+        if (trigramSelector && !trigramSelector.isEmpty()) {
+            tokenContent = trigramSelector.select(RND)
         }
     }
 
-    // Try bigram (if bigram or trigram mode enabled)
+    // Try Bigram
     if (!tokenContent && model.ngramMode >= NGRAM_BIGRAM && tokenContents.size() >= 1) {
         def bigramKey = tokenContents[-1]
-        def bigramModel
+        def bigramSelectors
         if (isLast) {
-            bigramModel = model.bigramLast
+            bigramSelectors = model.bigramLastSelectors
         } else if (position == 1) {
-            bigramModel = model.bigramStart
+            bigramSelectors = model.bigramStartSelectors
         } else {
-            bigramModel = model.bigramInner
+            bigramSelectors = model.bigramInnerSelectors
         }
-        def bigramMap = bigramModel[effLen]?[bigramKey]
-        if (bigramMap && !bigramMap.isEmpty()) {
-            tokenContent = selectFromWeightedMap(bigramMap)
+        def bigramSelector = bigramSelectors[effLen]?[bigramKey]
+        if (bigramSelector && !bigramSelector.isEmpty()) {
+            tokenContent = bigramSelector.select(RND)
         }
     }
 
@@ -575,17 +684,18 @@ def generateSentences(Model model, int targetSentences) {
 
         def segLenBucket = getSegmentLengthBucket(segLen)
         def transKey = currentState + "@" + segLenBucket
-        def nextPunctMap = model.transitions[transKey]
 
-        if (!nextPunctMap || nextPunctMap.isEmpty()) {
-            nextPunctMap = model.transitions[currentState]
+        // Prioritize bucket-specific selector, fallback to state-only
+        def nextPunctSelector = model.transitionSelectors[transKey]
+        if (!nextPunctSelector || nextPunctSelector.isEmpty()) {
+            nextPunctSelector = model.transitionSelectors[currentState]
         }
 
-        if (!nextPunctMap || nextPunctMap.isEmpty()) {
+        if (!nextPunctSelector || nextPunctSelector.isEmpty()) {
             throw new GenerationException("No transition data for state '${currentState}'")
         }
 
-        def nextPunct = selectFromWeightedMap(nextPunctMap)
+        def nextPunct = nextPunctSelector.select(RND)
 
         def segmentWords = []
         segLen.times { segmentWords << generatePseudoWord(model) }
@@ -602,14 +712,17 @@ def generateSentences(Model model, int targetSentences) {
             currentState = nextPunct
         }
     }
-    println sb.toString().replaceAll("(.{1,80})\\s+", "\$1\n")
+
+    println sb.toString().trim().replaceAll("(.{1,80})\\s+", "\$1\n")
 }
 
 def generateWordList(Model model, int count) {
     count.times { println generatePseudoWord(model) }
 }
 
-// --- Statistics ---
+// ----------------------------------------------------------------
+// --- STATISTICS ---
+// ----------------------------------------------------------------
 
 def printStatistics(Model model, boolean sentenceMode) {
     println "\n📊 --- ANALYSIS REPORT ---"
@@ -675,7 +788,7 @@ def printStatistics(Model model, boolean sentenceMode) {
                 def total = transMap.values().sum()
                 def stateLabel = (state == "START") ? "Start" : "After '${state}'"
                 def probs = transMap.collect { punct, count ->
-                    "'${punct}':" + String.format("%.1f%%", (count/total)*100)
+                    "'${punct}':" + String.format("%.1f%%", (count / total) * 100)
                 }.join(", ")
                 println String.format("%-15s → %s (n=%d)", stateLabel, probs, total)
             }
@@ -695,20 +808,20 @@ def printStatistics(Model model, boolean sentenceMode) {
                 def termPct = (termCount / total) * 100
 
                 def probs = transMap.collect { punct, count ->
-                    "'${punct}':" + String.format("%.1f%%", (count/total)*100)
+                    "'${punct}':" + String.format("%.1f%%", (count / total) * 100)
                 }.join(", ")
                 println String.format("%-15s [%4s words] → %s (n=%d, term=%.1f%%)", stateLabel, segBucket, probs, total, termPct)
             }
         }
     }
-    println "\n" + ("-"*54) + "\n"
+    println "\n" + ("-" * 54) + "\n"
 }
 
 def printUsage() {
     println """
 Usage:
   groovy PseudoGenerator.groovy -f <filename> -s <sentences> [-b | -t]
-  groovy PseudoGenerator.groovy -f <filename> -w <words> [-b | -t]
+  groovy PseudoGenerator.groovy -f <filename> -w <words> [-b | -t] [-p <n>]
 
 Required options:
   -f <file>   Input corpus file
@@ -719,16 +832,23 @@ Optional n-gram modeling:
   -b          Enable bigram cluster modeling
   -t          Enable trigram cluster modeling (includes bigrams)
 
+Optional word filtering (word mode only):
+  -p <n>      Prune: only generate words with n or more tokens
+              (e.g., -p 3 excludes 1-token and 2-token words)
+
 Options can appear in any order.
 
 Examples:
   groovy PseudoGenerator.groovy -f corpus.txt -s 10
   groovy PseudoGenerator.groovy -s 20 -f novel.txt -b
   groovy PseudoGenerator.groovy -t -w 50 -f names.csv
+  groovy PseudoGenerator.groovy -f names.csv -w 100 -p 3 -b
 """
 }
 
-// --- Main ---
+// ----------------------------------------------------------------
+// --- MAIN ---
+// ----------------------------------------------------------------
 
 def cmdArgs = parseCommandLine(args)
 
@@ -742,23 +862,31 @@ try {
     println "📖 Analyzing corpus: ${cmdArgs.filePath}"
     def model = analyzeText(cmdArgs.filePath, cmdArgs.ngramMode)
 
+    // Apply pruning if requested (before building selectors)
+    if (cmdArgs.pruneMinTokens > 0) {
+        pruneModel(model, cmdArgs.pruneMinTokens)
+    }
+
+    // Build optimized selectors (after pruning, so only valid entries are included)
+    buildModelSelectors(model)
+
     def requireSentenceStructure = (cmdArgs.mode == '-s')
     println "✅ Analysis complete. Validating model..."
     validateModel(model, requireSentenceStructure)
-    println "✅ Model validation passed."
+    println "✅ org.tdl.pwg.org.tdl.pwg.Model validation passed."
 
     printStatistics(model, cmdArgs.mode == '-s')
 
     if (cmdArgs.mode == '-w') {
         println "✍️  GENERATED WORDS:"
-        println "="*60
+        println "=" * 60
         generateWordList(model, cmdArgs.count)
-        println "="*60
+        println "=" * 60
     } else if (cmdArgs.mode == '-s') {
         println "✍️  GENERATED TEXT:"
-        println "="*60
+        println "=" * 60
         generateSentences(model, cmdArgs.count)
-        println "="*60
+        println "=" * 60
     }
 
 } catch (ModelValidationException e) {
