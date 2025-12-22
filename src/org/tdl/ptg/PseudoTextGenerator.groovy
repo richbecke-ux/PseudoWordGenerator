@@ -16,6 +16,7 @@ import java.nio.file.Paths
 @Field final Set<String> ALL_PUNCT = TERMINATORS + INTRA_PUNCT
 
 // Probability (0.0 - 1.0) to ignore a valid Trigram and force a Bigram choice.
+// Higher = more random gibberish, Lower = closer to original style.
 @Field final double CHAOS_FACTOR = 0.15
 
 // Max attempts to generate a unique word before giving up
@@ -30,6 +31,9 @@ import java.nio.file.Paths
 // --- DATA STRUCTURES ---
 // ----------------------------------------------------------------
 
+/**
+ * Implements O(log N) weighted random selection.
+ */
 @Canonical
 class WeightedSelector {
     final List<String> keys
@@ -75,9 +79,11 @@ class CommandLineArgs {
 class Model {
     // Stats
     Map<String, Integer> lengthStartStats = [:]
+
+    // The "Memory" of the corpus (used to reject duplicates)
     Set<String> vocabulary = new HashSet<>()
 
-    // Token Hierarchies
+    // Hierarchy: [EffectiveLength][PreviousType][Token] -> Count
     Map<Integer, Map<String, Map<String, Integer>>> startTokens = [:]
     Map<Integer, Map<String, Map<String, Integer>>> innerTokens = [:]
     Map<Integer, Map<String, Map<String, Integer>>> lastTokens = [:]
@@ -89,11 +95,11 @@ class Model {
     Map<Integer, Map<String, Map<String, Integer>>> trigramInner = [:]
     Map<Integer, Map<String, Map<String, Integer>>> trigramLast = [:]
 
-    // --- CHANGED: Segment Rhythm Templates ---
+    // Segment Rhythm Templates
     // Stores lengths of words between ANY punctuation (e.g. "Hi," -> [2])
     List<List<Integer>> segmentTemplates = []
 
-    // Transition probabilities
+    // Transition probabilities for punctuation
     Map<String, Map<String, Integer>> transitions = [:]
 
     int ngramMode = 2
@@ -114,7 +120,7 @@ class Model {
 }
 
 // ----------------------------------------------------------------
-// --- LOGIC ---
+// --- ANALYSIS ---
 // ----------------------------------------------------------------
 
 def parseCommandLine(String[] args) {
@@ -330,12 +336,11 @@ def generateRawWord(Model model, int targetLength) {
 
     // Fallback if we requested a length we've never seen
     if (!typeSelector) {
-        // Fallback to purely random word generation ignoring length constraint
         def fusedKey = model.lengthStartSelector.select(RND)
         if (!fusedKey) return "blob"
         targetLength = fusedKey.split(':')[0].toInteger()
         def startType = fusedKey.split(':')[1]
-        typeSelector = new WeightedSelector([(startType): 1]) // Mock selector
+        typeSelector = new WeightedSelector([(startType): 1])
     }
 
     def startType = typeSelector.select(RND)
@@ -405,13 +410,9 @@ def generateSentences(Model model, int count, boolean uniqueMode) {
     def sb = new StringBuilder()
     def currentState = "START"
 
-    // Loop 'count' times (generating 'count' segments/clauses, roughly)
-    // Note: Since we generate segments now, the total output length will be shorter/punchier.
-    // If you want 'count' to mean full sentences, you might need to increase this loop or track Terminators.
-    // For now, let's just loop 'count' times to generate 'count' blocks of text.
     count.times {
         if (model.segmentTemplates.isEmpty()) {
-            println "Error: No segment templates found."
+            println "Error: No segment templates found. Input text may lack punctuation."
             return
         }
 
@@ -474,7 +475,7 @@ def model = analyzeText(argsObj.filePath, argsObj.ngramMode)
 buildModelSelectors(model)
 
 println "📊 Stats: ${model.vocabulary.size()} unique words found."
-println "   ${model.segmentTemplates.size()} sentence rhythm templates captured."
+println "   ${model.segmentTemplates.size()} segment rhythm templates captured."
 
 if (argsObj.uniqueMode) println "✨ Unique Mode: Active (Filtering exact dictionary matches)"
 
