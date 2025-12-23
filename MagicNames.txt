@@ -1,0 +1,592 @@
+Soltari Priest.
+Soltari Monk.
+Soltari Champion.
+Soltari Crusader.
+Soltari Foot Soldier.
+Soltari Lancer.
+Soltari Trooper.
+Soltari Visionary.
+Soltari Guerrillas.
+Dauthi Slayer.
+Dauthi Horror.
+Dauthi Marauder.
+Dauthi Mindripper.
+Dauthi Mercenary.
+Dauthi Ghoul.
+Dauthi Trapper.
+Dauthi Cutthroat.
+Dauthi Jackal.
+Dauthi Warlord.
+Mogg Fanatic.
+Mogg Conscripts.
+Mogg Raider.
+Mogg Flunkies.
+Mogg Squad.
+Mogg Bombers.
+Spike Drone.
+Spike Feeder.
+Spike Breeder.
+Spike Colony.
+Spike Worker.
+Spike Weaver.
+Spike Soldier.
+Spike Hatcher.
+Carnophage.
+Horned Sliver.
+Winged Sliver.
+Muscle Sliver.
+Crystalline Sliver.
+Hibernation Sliver.
+Acidic Sliver.
+Metallic Sliver.
+Mnemonic Sliver.
+Talon Sliver.
+Barbed Sliver.
+Mindwhip Sliver.
+Heart Sliver.
+Clot Sliver.
+Victual Sliver.
+Sliver Queen.
+Commander Greven il-Vec.
+Vhati il-Dal.
+Selenia, Dark Angel.
+Crovax the Cursed.
+Mirri, Cat Warrior.
+Ertai, Wizard Adept.
+Starke of Rath.
+Oracle en-Vec.
+Eladamri, Lord of Leaves.
+Volrath's Shapeshifter.
+Verdant Force.
+Skyshroud Elf.
+Skyshroud Ranger.
+Skyshroud Troll.
+Skyshroud Troopers.
+Skyshroud Archer.
+Rootwalla.
+Trained Armodon.
+Canyon Wildcat.
+Jackal Pup.
+Fireslinger.
+Flowstone Wyvern.
+Flowstone Giant.
+Flowstone Salamander.
+Flowstone Shambler.
+Flowstone Mauler.
+Flowstone Blade.
+Bottle Gnomes.
+Steel Golem.
+Wall of Souls.
+Wall of Essence.
+Wall of Diffusion.
+Paladin en-Vec.
+Warrior en-Kor.
+Nomads en-Kor.
+Shaman en-Kor.
+Lancers en-Kor.
+Spirit en-Kor.
+Lowland Giant.
+Thalakos Seer.
+Thalakos Scout.
+Thalakos Deceiver.
+Thalakos Mistfolk.
+Thalakos Drifters.
+Thalakos Sentry.
+Thalakos Lowlands.
+Stinging Licid.
+Nurturing Licid.
+Gliding Licid.
+Enraging Licid.
+Leeching Licid.
+Transmogrifying Licid.
+Corrupting Licid.
+Rathi Dragon.
+Pit Imp.
+Revenant.
+Nightmare.
+Coffin Queen.
+Mindless Automaton.
+Mother of Runes.
+Radiant, Archangel.
+Monk Realist.
+Herald of Serra.
+Serra Zealot.
+Serra Advocate.
+Sanctum Custodian.
+Angelic Page.
+Voice of Grace.
+Voice of Law.
+Voice of Reason.
+Voice of Duty.
+Voice of Truth.
+Seasoned Marshal.
+Goblin Lackey.
+Goblin Welder.
+Goblin Matron.
+Goblin Patrol.
+Goblin War Buggy.
+Goblin Gardener.
+Goblin Medics.
+Goblin Settler.
+Goblin Marshal.
+Goblin Masons.
+Goblin Razerunners.
+Avalanche Riders.
+Keldon Vandals.
+Keldon Champion.
+Keldon Firebombers.
+Keldon Berserker.
+Viashino Sandscout.
+Viashino Heretic.
+Viashino Cutthroat.
+Viashino Runner.
+Crater Hellion.
+Shivan Phoenix.
+Shivan Wurm.
+Shivan Hellkite.
+Phyrexian Plaguelord.
+Phyrexian Ghoul.
+Phyrexian Defiler.
+Phyrexian Debaser.
+Phyrexian Denouncer.
+Phyrexian Negator.
+Phyrexian Colossus.
+Phyrexian Broodlings.
+Phyrexian Monitor.
+Phyrexian Driver.
+Phyrexian Battleflies.
+Blood Vassal.
+Bone Shredder.
+Fog of Gnats.
+Lurking Evil.
+Skirge Familiar.
+Skittering Skirge.
+Skittering Horror.
+Sleeper Agent.
+Unworthy Dead.
+Ravenous Skirge.
+Multani, Maro-Sorcerer.
+Deranged Hermit.
+Yavimaya Elder.
+Yavimaya Enchantress.
+Yavimaya Granger.
+Yavimaya Scion.
+Yavimaya Wurm.
+Yavimaya Ants.
+Yavimaya Gnats.
+Cradle Guard.
+Priest of Titania.
+Rofellos, Llanowar Emissary.
+Llanowar Sentinel.
+Llanowar Elite.
+Elvish Lyrist.
+Elvish Herder.
+Elvish Piper.
+Argothian Elder.
+Argothian Enchantress.
+Argothian Wurm.
+Argothian Swine.
+Albino Troll.
+Great Whale.
+Palinchron.
+Peregrine Drake.
+Cloud of Faeries.
+Thornwind Faeries.
+Masticore.
+Metalworker.
+Karn, Silver Golem.
+Morphling.
+Ticking Gnomes.
+Junk Diver.
+Devout Witness.
+Weatherseed Treefolk.
+Weatherseed Faeries.
+Weatherseed Elf.
+Hunting Moa.
+Thieving Magpie.
+Covetous Dragon.
+Ancient Silverback.
+Emperor Crocodile.
+Blastoderm.
+Saproling Burst.
+Arc Mage.
+Ballista Squad.
+Bouncer.
+Counterspell.
+Overtaker.
+Waterfront Bouncer.
+Ramosian Sergeant.
+Ramosian Lieutenant.
+Ramosian Captain.
+Ramosian Commander.
+Ramosian Sky Marshal.
+Lin Sivvi, Defiant Hero.
+Defiant Falcon.
+Defiant Vanguard.
+Thermal Glider.
+Nightwind Glider.
+Steadfast Guard.
+Charm Peddler.
+Alabaster Wall.
+Fresh Volunteers.
+Rappelling Scouts.
+Cateran Brute.
+Cateran Enforcer.
+Cateran Kidnappers.
+Cateran Overlord.
+Cateran Persuader.
+Cateran Slaver.
+Cateran Summons.
+Deepwood Ghoul.
+Deepwood Legate.
+Deepwood Drummer.
+Deepwood Elder.
+Deepwood Tantiv.
+Highway Robber.
+Rishadan Airship.
+Rishadan Brigand.
+Rishadan Cutpurse.
+Rishadan Footpad.
+Saprazzan Heir.
+Saprazzan Legate.
+Saprazzan Breaker.
+Saprazzan Outrigger.
+Saprazzan Raider.
+Cho-Manno, Revolutionary.
+Cho-Arrim Bruiser.
+Cho-Arrim Legate.
+Cho-Arrim Alchemist.
+Squee, Goblin Nabob.
+Kris Mage.
+Arms Dealer.
+Battle Rampart.
+Battle Squadron.
+Cinder Elemental.
+Fault Riders.
+Flowstone Crusher.
+Flowstone Thopter.
+Flowstone Wall.
+Laccolith Grunt.
+Laccolith Rig.
+Laccolith Titan.
+Laccolith Warrior.
+Laccolith Whelp.
+Mogg Toady.
+Mogg Salvage.
+Ogre Taskmaster.
+Ridgeline Rager.
+Silverglade Elemental.
+Silverglade Pathfinder.
+Snorting Gahr.
+Spore Frog.
+Stampede Driver.
+Vine Trellis.
+Woodripper.
+Avatar of Hope.
+Avatar of Fury.
+Avatar of Might.
+Avatar of Will.
+Avatar of Woe.
+Aerial Caravan.
+Agent of Shauku.
+Aler Attendant.
+Alley Grifters.
+Ambassador Laquatus.
+Ancestral Mask.
+Aven Cloudchaser.
+Aven Fisher.
+Aven Flock.
+Aven Smokeweaver.
+Balshan Beguiler.
+Balshan Collaborator.
+Barbarian Lunatic.
+Battlewise Aven.
+Beast Attack.
+Birds of Paradise.
+Blessed Orator.
+Bloodfire Colossus.
+Bloodfire Dwarf.
+Bloodfire Infusion.
+Bloodfire Kavu.
+Bog Glider.
+Bog Wraith.
+Braids, Cabal Minion.
+Cabal Interrogator.
+Cabal Patriarch.
+Cabal Surgeon.
+Cabal Torturer.
+Cabal Trainee.
+Cephalid Aristocrat.
+Cephalid Broker.
+Cephalid Constable.
+Cephalid Looter.
+Cephalid Retainer.
+Cephalid Scout.
+Cephalid Sage.
+Chainflinger.
+Childhood Horror.
+Chainer, Dementia Master.
+Commander Eesha.
+Crypt Creeper.
+Daru Cavalier.
+Daru Healer.
+Daru Lancer.
+Daru Mender.
+Daru Sanctifier.
+Daru Stinger.
+Daru Warchief.
+Dauthi Embrace.
+Devoted Caretaker.
+Dogged Hunter.
+Dwarven Bloodboiler.
+Dwarven Recruiter.
+Dwarven Strike Force.
+Femeref Knight.
+Filthy Cur.
+Flame-Kin Zealot.
+Flametongue Kavu.
+Floating Shield.
+Genesis.
+Ghastly Demise.
+Giant Warthog.
+Glory.
+Goblin Dynamo.
+Goblin Goon.
+Goblin Legionnaire.
+Goblin Piledriver.
+Goblin Ringleader.
+Goblin Sharpshooter.
+Goblin Sledder.
+Goblin Taskmaster.
+Goblin Warchief.
+Grim Lavamancer.
+Grizzly Fate.
+Gurzigost.
+Hapless Researcher.
+Hell-Bent Raider.
+Hypnox.
+Ichorid.
+Iridescent Angel.
+Kamahl, Pit Fighter.
+Kamahl, Fist of Krosa.
+Krosan Archer.
+Krosan Avenger.
+Krosan Beast.
+Krosan Cloudscraper.
+Krosan Colossus.
+Krosan Constrictor.
+Krosan Drover.
+Krosan Groundshaker.
+Krosan Restorer.
+Krosan Tusker.
+Krosan Verge.
+Krosan Vorine.
+Krosan Warchief.
+Laquatus's Champion.
+Llawan, Cephalid Empress.
+Major Teroh.
+Mesmeric Fiend.
+Millikin.
+Mirari's Wake.
+Mystic Enforcer.
+Mystic Zealot.
+Nantuko Blightcutter.
+Nantuko Calmer.
+Nantuko Cultivator.
+Nantuko Disciple.
+Nantuko Elder.
+Nantuko Husk.
+Nantuko Mentor.
+Nantuko Monastery.
+Nantuko Shade.
+Nantuko Shrine.
+Nantuko Tracer.
+Nantuko Vigilante.
+Nightscape Familiar.
+Nimble Mongoose.
+Nomad Decoy.
+Nomad Mythmaker.
+Null Champion.
+Nut Collector.
+Odyssey Zombie.
+Pardic Arsonist.
+Pardic Collaborator.
+Pardic Firecat.
+Pardic Lancer.
+Pardic Miner.
+Patron Wizard.
+Phantom Centaur.
+Phantom Nantuko.
+Phantom Nishoba.
+Phantom Nomad.
+Phantom Flock.
+Phantom Tiger.
+Pianna, Nomad Captain.
+Psychatog.
+Puppeteer.
+Rabid Elephant.
+Ravenous Baloth.
+Ravenous Rats.
+Repentant Vampire.
+Resilient Wanderer.
+Roar of the Wurm.
+Rotting Giant.
+Savage Firecat.
+Scalpelexis.
+Scion of Darkness.
+Seton, Krosan Protector.
+Shadowmage Infiltrator.
+Shieldmage Advocate.
+Silvos, Rogue Elemental.
+Skywing Aven.
+Slithery Stalker.
+Soulcatcher.
+Soulless One.
+Spectral Lynx.
+Spiritmonger.
+Squirrel Mob.
+Squirrel Nest.
+Stormscape Familiar.
+Sunscape Familiar.
+Teroh's Faithful.
+Terravore.
+Thornscape Familiar.
+Thought Devourer.
+Thought Eater.
+Thunderscape Familiar.
+Tireless Tribe.
+Thought Nibbler.
+Towering Baloth.
+Treetop Scout.
+Treetop Sentinel.
+Troll Ascetic.
+Undead Gladiator.
+Upheaval.
+Valor.
+Vampire Bats.
+Vengeful Dreams.
+Vigilant Sentry.
+Viridian Shaman.
+Viridian Zealot.
+Visara the Dreadful.
+Wayward Angel.
+Werebear.
+Wild Mongrel.
+Wonder.
+Worldgorger Dragon.
+Wurm's Tooth.
+Wrath of God.
+Ancestor's Prophet.
+Aven Brigadier.
+Cabal Archon.
+Catapult Master.
+Centaur Glade.
+Clickslither.
+Clutch of Undeath.
+Contested Cliffs.
+Crowd Favorites.
+Cruel Revival.
+Daunting Defender.
+Deftblade Elite.
+Doubtless One.
+Dragon Roost.
+Elvish Vanguard.
+Exalted Angel.
+Festering Goblin.
+Gempalm Avenger.
+Gempalm Incinerator.
+Gempalm Polluter.
+Gempalm Sorcerer.
+Gempalm Strider.
+Gigapede.
+Glowrider.
+Goblin Burrows.
+Goblin Pyromancer.
+Goblin Sky Raider.
+Goblin Sledder.
+Goblin Turncoat.
+Grinning Demon.
+Heedless One.
+Hystrodon.
+Imperial Hellkite.
+Jareth, Leonine Titan.
+Kilnmouth Dragon.
+Krosan Groundshaker.
+Leonin Abunas.
+Leonin Battlemage.
+Leonin Den-Guard.
+Leonin Elder.
+Leonin Shikari.
+Leonin Skyhunter.
+Leonin Squire.
+Leonin Sun Standard.
+Loxodon Mender.
+Loxodon Mystic.
+Loxodon Punisher.
+Mistform Dreamer.
+Mistform Mask.
+Mistform Mutant.
+Mistform Seaswift.
+Mistform Shrieker.
+Mistform Skyreaver.
+Mistform Sliver.
+Mistform Stalker.
+Mistform Ultimus.
+Mistform Wakecaster.
+Mistform Wall.
+Noxious Ghoul.
+Quicksilver Dragon.
+Raven Guild Master.
+Ridgetop Raptor.
+Riptide Biologist.
+Riptide Chronologist.
+Riptide Director.
+Riptide Entrancer.
+Riptide Mangler.
+Riptide Pilferer.
+Riptide Replicator.
+Riptide Shapeshifter.
+Riptide Survivor.
+Rockshard Elemental.
+Rotlung Reanimator.
+Shaleskin Bruiser.
+Shepherd of Rot.
+Skirk Commando.
+Skirk Drill Sergeant.
+Skirk Fire Marshal.
+Skirk Marauder.
+Skirk Outrider.
+Skirk Prospector.
+Skirk Shaman.
+Skirk Volcanist.
+Starlit Sanctum.
+Stinger.
+Symbiotic Beast.
+Symbiotic Elf.
+Symbiotic Wurm.
+Thoughtbound Primoc.
+Timberwatch Elf.
+Toxin Sliver.
+Tribal Golem.
+Tribal Unity.
+Treespring Lorian.
+True Believer.
+Undead Warchief.
+Vile Deacon.
+Voidmage Prodigy.
+Wellwisher.
+Windborn Muse.
+Wirewood Channeler.
+Wirewood Elf.
+Wirewood Guardian.
+Wirewood Herald.
+Wirewood Hivemaster.
+Wirewood Lodge.
+Wirewood Pride.
+Wirewood Savage.
+Wirewood Symbiote.
+Withered Wretch.
+Wretched Anurid.
+Zombie Brute.
+Akroma, Angel of Wrath.
+Akroma, Angel of Fury.

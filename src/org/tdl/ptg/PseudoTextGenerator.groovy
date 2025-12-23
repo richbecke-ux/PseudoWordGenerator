@@ -16,7 +16,6 @@ import java.nio.file.Paths
 @Field final Set<String> ALL_PUNCT = TERMINATORS + INTRA_PUNCT
 
 // Probability (0.0 - 1.0) to ignore a valid Trigram and force a Bigram choice.
-// Higher = more random gibberish, Lower = closer to original style.
 @Field final double CHAOS_FACTOR = 0.15
 
 // Max attempts to generate a unique word before giving up
@@ -31,9 +30,6 @@ import java.nio.file.Paths
 // --- DATA STRUCTURES ---
 // ----------------------------------------------------------------
 
-/**
- * Implements O(log N) weighted random selection.
- */
 @Canonical
 class WeightedSelector {
     final List<String> keys
@@ -71,6 +67,7 @@ class CommandLineArgs {
     String mode = null
     int count = 0
     int ngramMode = 2 // Default to Trigram
+    int pruneMinTokens = 0
     boolean uniqueMode = true
     boolean valid = false
     String errorMessage = null
@@ -79,11 +76,9 @@ class CommandLineArgs {
 class Model {
     // Stats
     Map<String, Integer> lengthStartStats = [:]
-
-    // The "Memory" of the corpus (used to reject duplicates)
     Set<String> vocabulary = new HashSet<>()
 
-    // Hierarchy: [EffectiveLength][PreviousType][Token] -> Count
+    // Token Hierarchies
     Map<Integer, Map<String, Map<String, Integer>>> startTokens = [:]
     Map<Integer, Map<String, Map<String, Integer>>> innerTokens = [:]
     Map<Integer, Map<String, Map<String, Integer>>> lastTokens = [:]
@@ -96,10 +91,9 @@ class Model {
     Map<Integer, Map<String, Map<String, Integer>>> trigramLast = [:]
 
     // Segment Rhythm Templates
-    // Stores lengths of words between ANY punctuation (e.g. "Hi," -> [2])
     List<List<Integer>> segmentTemplates = []
 
-    // Transition probabilities for punctuation
+    // Transition probabilities
     Map<String, Map<String, Integer>> transitions = [:]
 
     int ngramMode = 2
@@ -136,11 +130,27 @@ def parseCommandLine(String[] args) {
             case '-t': result.ngramMode = NGRAM_TRIGRAM; break
             case '-u': result.uniqueMode = true; break
             case '-nu': result.uniqueMode = false; break
+            case '-p': result.pruneMinTokens = args[++i].toInteger(); break
         }
         i++
     }
-    if (result.filePath && result.mode && result.count > 0) result.valid = true
-    else result.errorMessage = "Missing arguments. Need -f, and -s or -w."
+
+    if (result.filePath == null) {
+        result.errorMessage = "Missing required argument: -f <filename>"
+        return result
+    }
+    if (result.mode == null) {
+        result.errorMessage = "Missing mode: Specify -s <sentences> or -w <words>"
+        return result
+    }
+
+    // VALIDATION: Pruning is strictly for Word Mode
+    if (result.pruneMinTokens > 0 && result.mode == '-s') {
+        result.errorMessage = "Conflict: Option -p (prune) is only allowed in word mode (-w), not sentence mode."
+        return result
+    }
+
+    if (result.count > 0) result.valid = true
     return result
 }
 
@@ -179,7 +189,17 @@ def ensureNestedMap(Map map, int k1, String k2) {
 }
 
 def analyzeText(String filePath, int ngramMode) {
-    def text = Files.readString(Paths.get(filePath)).toLowerCase()
+    def path = Paths.get(filePath)
+    String text
+    try {
+        // Try UTF-8
+        text = Files.readString(path).toLowerCase()
+    } catch (java.nio.charset.MalformedInputException | java.nio.charset.UnmappableCharacterException e) {
+        // Fallback to ISO-8859-1 for legacy files
+        println "⚠️  Notice: File is not UTF-8. Falling back to ISO-8859-1..."
+        text = Files.readString(path, java.nio.charset.Charset.forName("ISO-8859-1")).toLowerCase()
+    }
+
     text = text.replaceAll(/\r\n/, "\n").replaceAll(/\s+/, " ")
 
     def rawTokens = text.split(" ")
@@ -188,8 +208,6 @@ def analyzeText(String filePath, int ngramMode) {
 
     def currentSegmentLen = 0
     def previousState = "START"
-
-    // Stores lengths of words in the CURRENT SEGMENT (Clause), not full sentence
     List<Integer> currentSegmentStructure = []
 
     rawTokens.each { token ->
@@ -199,13 +217,12 @@ def analyzeText(String filePath, int ngramMode) {
         def punctuation = null
         def wordPart = token
 
-        // 1. Separate punctuation first
         if (ALL_PUNCT.contains(lastChar)) {
             punctuation = lastChar
             wordPart = token.dropRight(1)
         }
 
-        // --- SANITY FILTER ---
+        // Sanity Filter
         def cleanPart = wordPart.findAll { Character.isLetter(it as char) }.join('')
         def hasVowel = cleanPart.any { VOWELS.contains(it.toString()) }
         def maxCons = 0
@@ -218,15 +235,13 @@ def analyzeText(String filePath, int ngramMode) {
             }
         }
 
-        // Only analyze valid-looking words
         if (cleanPart && hasVowel && maxCons <= 4 && cleanPart.length() <= 15) {
-
             def structureTokens = tokenizeWordStructure(wordPart)
             if (structureTokens) {
                 model.vocabulary.add(cleanPart)
 
                 def len = structureTokens.size()
-                currentSegmentStructure.add(len) // Add to current clause
+                currentSegmentStructure.add(len)
 
                 def effLen = getEffectiveLength(len)
                 def firstToken = structureTokens[0]
@@ -267,15 +282,12 @@ def analyzeText(String filePath, int ngramMode) {
             }
         }
 
-        // --- SEGMENT & TRANSITION ANALYSIS ---
         if (punctuation) {
-            // Record Transition
             if (currentSegmentLen > 0) {
                 def transMap = model.transitions.computeIfAbsent(previousState, { [:] })
                 transMap[punctuation] = (transMap[punctuation] ?: 0) + 1
             }
 
-            // Record Rhythm (Flush segment)
             if (!currentSegmentStructure.isEmpty()) {
                 model.segmentTemplates.add(new ArrayList(currentSegmentStructure))
                 currentSegmentStructure.clear()
@@ -292,8 +304,34 @@ def analyzeText(String filePath, int ngramMode) {
     return model
 }
 
+// ----------------------------------------------------------------
+// --- PRUNING (Word Mode Only) ---
+// ----------------------------------------------------------------
+
+def pruneModel(Model model, int minTokens) {
+    if (minTokens <= 0) return
+
+    // Remove word length stats <= minTokens
+    def keysToRemove = model.lengthStartStats.keySet().findAll { key ->
+        def len = key.split(':')[0].toInteger()
+        len <= minTokens
+    }
+
+    keysToRemove.each { model.lengthStartStats.remove(it) }
+
+    if (model.lengthStartStats.isEmpty()) {
+        throw new RuntimeException("Pruning with -p ${minTokens} removed ALL words from the model!")
+    }
+
+    println "✂️  Pruning words with ${minTokens} or fewer tokens (Word Mode)."
+    println "   - Removed ${keysToRemove.size()} word-length categories."
+}
+
+// ----------------------------------------------------------------
+// --- SELECTORS & GENERATION ---
+// ----------------------------------------------------------------
+
 def buildModelSelectors(Model model) {
-    // 1. Build specific start selectors for each word length
     Map<Integer, Map<String, Integer>> lengthToStartMap = [:]
     model.lengthStartStats.each { key, count ->
         def parts = key.split(':')
@@ -305,7 +343,6 @@ def buildModelSelectors(Model model) {
         model.lengthToStartTypeSelector[len] = new WeightedSelector(map)
     }
 
-    // 2. Standard Selectors
     model.lengthStartSelector = new WeightedSelector(model.lengthStartStats)
 
     def build = { src, dest ->
@@ -326,15 +363,10 @@ def buildModelSelectors(Model model) {
     model.transitions.each { k, v -> model.transitionSelectors[k] = new WeightedSelector(v) }
 }
 
-// ----------------------------------------------------------------
-// --- GENERATION ---
-// ----------------------------------------------------------------
-
 def generateRawWord(Model model, int targetLength) {
-    // 1. Determine Start Type for this specific length
     def typeSelector = model.lengthToStartTypeSelector[targetLength]
 
-    // Fallback if we requested a length we've never seen
+    // Fallback if requested length doesn't exist
     if (!typeSelector) {
         def fusedKey = model.lengthStartSelector.select(RND)
         if (!fusedKey) return "blob"
@@ -347,19 +379,15 @@ def generateRawWord(Model model, int targetLength) {
     def effLen = getEffectiveLength(targetLength)
 
     def tokens = []
-
-    // 2. Start Token
     def startContent = model.startSelectors[effLen]?[startType]?.select(RND)
     if (!startContent) return "err"
     tokens << startContent
     def prevType = startType
 
-    // 3. Build Word
     for (int i = 1; i < targetLength; i++) {
         def isLast = (i == targetLength - 1)
         def token = null
 
-        // A. Trigram Attempt (with Chaos Factor backoff)
         if (model.ngramMode >= NGRAM_TRIGRAM && tokens.size() >= 2) {
             if (RND.nextDouble() > CHAOS_FACTOR) {
                 def tgKey = "${tokens[-2]}:${tokens[-1]}"
@@ -368,23 +396,19 @@ def generateRawWord(Model model, int targetLength) {
             }
         }
 
-        // B. Bigram Attempt
         if (!token && model.ngramMode >= NGRAM_BIGRAM) {
             def bgKey = tokens[-1]
-            def sel
-            if (isLast) sel = model.bigramLastSelectors
-            else if (i == 1) sel = model.bigramStartSelectors
-            else sel = model.bigramInnerSelectors
+            def sel = isLast ? model.bigramLastSelectors :
+                    (i == 1) ? model.bigramStartSelectors : model.bigramInnerSelectors
             token = sel[effLen]?[bgKey]?.select(RND)
         }
 
-        // C. Fallback (Type-based)
         if (!token) {
             def sel = isLast ? model.lastSelectors : model.innerSelectors
             token = sel[effLen]?[prevType]?.select(RND)
         }
 
-        if (!token) token = (prevType == 'C') ? 'a' : 'b' // Emergency fallback
+        if (!token) token = (prevType == 'C') ? 'a' : 'b'
         tokens << token
         prevType = (prevType == 'C' ? 'V' : 'C')
     }
@@ -412,35 +436,29 @@ def generateSentences(Model model, int count, boolean uniqueMode) {
 
     count.times {
         if (model.segmentTemplates.isEmpty()) {
-            println "Error: No segment templates found. Input text may lack punctuation."
+            println "Error: No segment templates found."
             return
         }
 
-        // 1. Pick a Segment Template (Rhythm of a clause)
         def template = model.segmentTemplates[RND.nextInt(model.segmentTemplates.size())]
 
-        // 2. Generate Words
         def words = []
         template.each { len ->
             words << generateWord(model, len, uniqueMode)
         }
 
-        // 3. Capitalize ONLY if we are at the start of a sentence
         if (words && (currentState == "START" || TERMINATORS.contains(currentState))) {
             words[0] = words[0].capitalize()
         }
 
-        // 4. Append
         sb.append(words.join(" "))
 
-        // 5. Determine Punctuation
         def punctSel = model.transitionSelectors[currentState]
         if (!punctSel) punctSel = model.transitionSelectors["START"]
 
         def punct = punctSel ? punctSel.select(RND) : "."
         sb.append(punct).append(" ")
 
-        // 6. Update State
         if (TERMINATORS.contains(punct)) currentState = "START"
         else currentState = punct
     }
@@ -464,18 +482,23 @@ def generateRandomWords(Model model, int count, boolean uniqueMode) {
 
 def argsObj = parseCommandLine(args)
 if (!argsObj.valid) {
-    println "Error: ${argsObj.errorMessage}"
-    println "Usage: groovy script.groovy -f <file> -s <sentences> [-w <words>] [-t|-b] [-u]"
+    println "❌ Error: ${argsObj.errorMessage}"
+    println "Usage: groovy script.groovy -f <file> -s <sentences> [-w <words>] [-t|-b] [-u] [-p <n>]"
     System.exit(1)
 }
 
 println "📖 Analyzing ${argsObj.filePath}..."
 println "   (Mode: Trigram + Chaos Backoff + Rhythm Mimicry)"
 def model = analyzeText(argsObj.filePath, argsObj.ngramMode)
+
+if (argsObj.pruneMinTokens > 0) {
+    pruneModel(model, argsObj.pruneMinTokens)
+}
+
 buildModelSelectors(model)
 
 println "📊 Stats: ${model.vocabulary.size()} unique words found."
-println "   ${model.segmentTemplates.size()} segment rhythm templates captured."
+println "   ${model.segmentTemplates.size()} segment rhythm templates available."
 
 if (argsObj.uniqueMode) println "✨ Unique Mode: Active (Filtering exact dictionary matches)"
 
