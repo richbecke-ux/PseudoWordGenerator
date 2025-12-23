@@ -15,16 +15,16 @@ import java.nio.file.Paths
 @Field final Set<String> INTRA_PUNCT = new HashSet([',', ':', ';', '—', '-'])
 @Field final Set<String> ALL_PUNCT = TERMINATORS + INTRA_PUNCT
 
-// Probability (0.0 - 1.0) to ignore a valid Trigram and force a Bigram choice.
+// Chaos Factor: Chance to drop down a tier (e.g. Trigram -> Bigram) for variety
 @Field final double CHAOS_FACTOR = 0.15
 
-// Max attempts to generate a unique word before giving up
 @Field final int MAX_UNIQUE_RETRIES = 50
-
 @Field final int MAX_EFF_LEN = 8
-@Field final int NGRAM_NONE = 0
-@Field final int NGRAM_BIGRAM = 1
-@Field final int NGRAM_TRIGRAM = 2
+
+// Definitions
+@Field final int NGRAM_UNIGRAM = 1
+@Field final int NGRAM_BIGRAM = 2
+@Field final int NGRAM_TRIGRAM = 3
 
 // ----------------------------------------------------------------
 // --- DATA STRUCTURES ---
@@ -66,37 +66,35 @@ class CommandLineArgs {
     String filePath = null
     String mode = null
     int count = 0
-    int ngramMode = 2 // Default to Trigram
+    int ngramMode = 3 // Default is Trigram
     int pruneMinTokens = 0
-    boolean uniqueMode = true
+    boolean uniqueMode = false
     boolean valid = false
     String errorMessage = null
 }
 
 class Model {
-    // Stats
     Map<String, Integer> lengthStartStats = [:]
     Set<String> vocabulary = new HashSet<>()
 
-    // Token Hierarchies
+    // Unigram / Structural Stats (Length -> Type -> Count)
     Map<Integer, Map<String, Map<String, Integer>>> startTokens = [:]
     Map<Integer, Map<String, Map<String, Integer>>> innerTokens = [:]
     Map<Integer, Map<String, Map<String, Integer>>> lastTokens = [:]
 
-    // N-Grams
+    // Bigram Stats
     Map<Integer, Map<String, Map<String, Integer>>> bigramStart = [:]
     Map<Integer, Map<String, Map<String, Integer>>> bigramInner = [:]
     Map<Integer, Map<String, Map<String, Integer>>> bigramLast = [:]
+
+    // Trigram Stats
     Map<Integer, Map<String, Map<String, Integer>>> trigramInner = [:]
     Map<Integer, Map<String, Map<String, Integer>>> trigramLast = [:]
 
-    // Segment Rhythm Templates
     List<List<Integer>> segmentTemplates = []
-
-    // Transition probabilities
     Map<String, Map<String, Integer>> transitions = [:]
 
-    int ngramMode = 2
+    int ngramMode = 3
 
     // Selectors
     WeightedSelector lengthStartSelector
@@ -126,10 +124,15 @@ def parseCommandLine(String[] args) {
             case '-f': result.filePath = args[++i]; break
             case '-s': result.mode = '-s'; result.count = args[++i].toInteger(); break
             case '-w': result.mode = '-w'; result.count = args[++i].toInteger(); break
+
+                // N-Gram Selection
+            case '-1': result.ngramMode = NGRAM_UNIGRAM; break
+            case '-2':
             case '-b': result.ngramMode = NGRAM_BIGRAM; break
+            case '-3':
             case '-t': result.ngramMode = NGRAM_TRIGRAM; break
+
             case '-u': result.uniqueMode = true; break
-            case '-nu': result.uniqueMode = false; break
             case '-p': result.pruneMinTokens = args[++i].toInteger(); break
         }
         i++
@@ -144,7 +147,6 @@ def parseCommandLine(String[] args) {
         return result
     }
 
-    // VALIDATION: Pruning is strictly for Word Mode
     if (result.pruneMinTokens > 0 && result.mode == '-s') {
         result.errorMessage = "Conflict: Option -p (prune) is only allowed in word mode (-w), not sentence mode."
         return result
@@ -192,10 +194,8 @@ def analyzeText(String filePath, int ngramMode) {
     def path = Paths.get(filePath)
     String text
     try {
-        // Try UTF-8
         text = Files.readString(path).toLowerCase()
     } catch (java.nio.charset.MalformedInputException | java.nio.charset.UnmappableCharacterException e) {
-        // Fallback to ISO-8859-1 for legacy files
         println "⚠️  Notice: File is not UTF-8. Falling back to ISO-8859-1..."
         text = Files.readString(path, java.nio.charset.Charset.forName("ISO-8859-1")).toLowerCase()
     }
@@ -222,7 +222,6 @@ def analyzeText(String filePath, int ngramMode) {
             wordPart = token.dropRight(1)
         }
 
-        // Sanity Filter
         def cleanPart = wordPart.findAll { Character.isLetter(it as char) }.join('')
         def hasVowel = cleanPart.any { VOWELS.contains(it.toString()) }
         def maxCons = 0
@@ -305,18 +304,16 @@ def analyzeText(String filePath, int ngramMode) {
 }
 
 // ----------------------------------------------------------------
-// --- PRUNING (Word Mode Only) ---
+// --- PRUNING ---
 // ----------------------------------------------------------------
 
 def pruneModel(Model model, int minTokens) {
     if (minTokens <= 0) return
 
-    // Remove word length stats <= minTokens
     def keysToRemove = model.lengthStartStats.keySet().findAll { key ->
         def len = key.split(':')[0].toInteger()
         len <= minTokens
     }
-
     keysToRemove.each { model.lengthStartStats.remove(it) }
 
     if (model.lengthStartStats.isEmpty()) {
@@ -328,7 +325,7 @@ def pruneModel(Model model, int minTokens) {
 }
 
 // ----------------------------------------------------------------
-// --- SELECTORS & GENERATION ---
+// --- GENERATION ---
 // ----------------------------------------------------------------
 
 def buildModelSelectors(Model model) {
@@ -366,7 +363,6 @@ def buildModelSelectors(Model model) {
 def generateRawWord(Model model, int targetLength) {
     def typeSelector = model.lengthToStartTypeSelector[targetLength]
 
-    // Fallback if requested length doesn't exist
     if (!typeSelector) {
         def fusedKey = model.lengthStartSelector.select(RND)
         if (!fusedKey) return "blob"
@@ -388,6 +384,7 @@ def generateRawWord(Model model, int targetLength) {
         def isLast = (i == targetLength - 1)
         def token = null
 
+        // 1. Trigram (Only if Mode >= 3)
         if (model.ngramMode >= NGRAM_TRIGRAM && tokens.size() >= 2) {
             if (RND.nextDouble() > CHAOS_FACTOR) {
                 def tgKey = "${tokens[-2]}:${tokens[-1]}"
@@ -396,6 +393,7 @@ def generateRawWord(Model model, int targetLength) {
             }
         }
 
+        // 2. Bigram (Only if Mode >= 2)
         if (!token && model.ngramMode >= NGRAM_BIGRAM) {
             def bgKey = tokens[-1]
             def sel = isLast ? model.bigramLastSelectors :
@@ -403,6 +401,7 @@ def generateRawWord(Model model, int targetLength) {
             token = sel[effLen]?[bgKey]?.select(RND)
         }
 
+        // 3. Unigram / Structural Fallback (Always active if previous failed, or if Mode == 1)
         if (!token) {
             def sel = isLast ? model.lastSelectors : model.innerSelectors
             token = sel[effLen]?[prevType]?.select(RND)
@@ -483,12 +482,23 @@ def generateRandomWords(Model model, int count, boolean uniqueMode) {
 def argsObj = parseCommandLine(args)
 if (!argsObj.valid) {
     println "❌ Error: ${argsObj.errorMessage}"
-    println "Usage: groovy script.groovy -f <file> -s <sentences> [-w <words>] [-t|-b] [-u] [-p <n>]"
+    println "Usage: groovy script.groovy -f <file> -s <count> [-w] [-1|-2|-3] [-u] [-p <n>]"
     System.exit(1)
 }
 
 println "📖 Analyzing ${argsObj.filePath}..."
-println "   (Mode: Trigram + Chaos Backoff + Rhythm Mimicry)"
+
+String modeName
+switch (argsObj.ngramMode) {
+    case NGRAM_UNIGRAM: modeName = "Unigram (Structure Only)"; break
+    case NGRAM_BIGRAM: modeName = "Bigram"; break
+    case NGRAM_TRIGRAM: modeName = "Trigram"; break
+    default: modeName = "Unknown"
+}
+
+println "   (Mode: ${modeName} + Rhythm Mimicry)"
+if (argsObj.ngramMode == NGRAM_TRIGRAM) println "   (Note: Chaos Backoff enabled)"
+
 def model = analyzeText(argsObj.filePath, argsObj.ngramMode)
 
 if (argsObj.pruneMinTokens > 0) {
@@ -501,6 +511,7 @@ println "📊 Stats: ${model.vocabulary.size()} unique words found."
 println "   ${model.segmentTemplates.size()} segment rhythm templates available."
 
 if (argsObj.uniqueMode) println "✨ Unique Mode: Active (Filtering exact dictionary matches)"
+else println "🌀 Unique Mode: Inactive (Duplicates allowed)"
 
 println "\n✍️  OUTPUT:"
 println "=" * 60

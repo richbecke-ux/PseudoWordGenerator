@@ -30,3 +30,8 @@ bin/
 ### Mac OS ###
 .DS_Store
 /lib/
+/.idea/libraries/groovy_5_0_0.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml
+/#**#
