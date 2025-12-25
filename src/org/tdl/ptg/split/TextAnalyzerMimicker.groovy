@@ -14,10 +14,8 @@ import java.util.regex.Pattern
 class Globals {
     static final Random RND = new Random()
     static final Set<String> VOWELS = new HashSet(['a', 'e', 'i', 'o', 'u', 'y', 'æ', 'ø', 'å', 'ä', 'ö', 'ü', 'é'])
-    // \u00B6 = Pilcrow (Specific Newline Terminator for Attributions)
-    static final Set<String> TERMINATORS = new HashSet(['.', '!', '?', '\u2026', '\u00B6'])
+    static final Set<String> TERMINATORS = new HashSet(['.', '!', '?', '\u2026', '\u00B6']) // \u00B6 = Pilcrow
     static final Set<String> PAUSES = new HashSet([',', ';', ':'])
-    // \uE000 = Internal Marker for Valid Attribution Dashes
     static final Set<String> ALL_PUNCT = new HashSet(['.', '!', '?', ',', ':', ';',
                                                       '\u2014', '-', '\u2026', '\u00B6', '\uE000',
                                                       '\u0022', '\u201C', '\u201D',
@@ -95,7 +93,6 @@ class Punctuation {
 
     static String guessOpenClose(String prevText, String nextText) {
         def prevEndsWord = prevText && prevText =~ /[\w.,!?]$/
-        // Include our special markers in the spacing logic
         def prevEndsSpace = !prevText || prevText =~ /[\s(\[{—\u00B6\uE000]$/
         def nextStartsWord = nextText && nextText =~ /^\w/
         def nextStartsSpace = !nextText || nextText =~ /^[\s)\]}.,:;!?—\u00B6\uE000]/
@@ -577,10 +574,11 @@ class Analyzer {
         def text = fileContent
         text = text.replaceAll(/--+/, '\u2014') // Normalize all dashes to em-dash
 
-        // 1. IDENTIFY ATTRIBUTIONS (Quote + Space* + Dash + Space* + Words + EndOfLine)
+        // 1. IDENTIFY ATTRIBUTIONS (Quote + Space* + Dash + NoSpace + Words + EndOfLine)
         // Replaces the Dash with \uE000 and the EndOfLine with \u00B6
         // This PROTECTS valid attributions from pruning.
-        text = text.replaceAll(/([”"])\s*\u2014\s*([^\s\n\r].*?)(\r?\n|$)/, '$1 \uE000 $2 \u00B6 ')
+        // Regex strictness: (?=\S) ensures dash is followed by a non-space char (Start of Name)
+        text = text.replaceAll(/(?m)([”"])\s*\u2014(?=\S)(.*?)(\r?\n|$)/, '$1 \uE000 $2 \u00B6 ')
 
         // 2. PRUNE INVALID DASHES
         // "Any other dash preceded by whitespace and followed by non-whitespace is removed entirely"
@@ -966,4 +964,33 @@ class Generator {
         }
         println "✅ Done."
     }
+}
+
+// ----------------------------------------------------------------
+// --- MAIN ---
+// ----------------------------------------------------------------
+
+def cfg = parseArgs(args)
+
+if (!cfg.valid) {
+    println "❌ Error: ${cfg.error}"
+    println """
+PSEUDO FACTORY (Structural Markov Edition) - USAGE:
+  1. ANALYZE: groovy script.groovy -a -f <source.txt> -w <words.json> [-s <sent.json>] [-u]
+  2. GENERATE: groovy script.groovy -g -w <words.json> [-s <sent.json>] [-c <n>] [-u] [-p <n>]
+"""
+    System.exit(1)
+}
+println cfg.toString()
+
+if (cfg.analyze) {
+    def analyzer = new Analyzer()
+    analyzer.process(cfg)
+    analyzer.save(cfg)
+}
+if (cfg.generate) {
+    def generator = new Generator()
+    generator.loadWordModel(cfg)
+    if (cfg.sentenceStatsFile) generator.loadRhythmModel(cfg.sentenceStatsFile)
+    generator.execute(cfg)
 }
