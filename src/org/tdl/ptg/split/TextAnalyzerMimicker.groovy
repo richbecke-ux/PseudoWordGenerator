@@ -5,651 +5,837 @@ import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.regex.Pattern
+
+// ================================================================
+// PSEUDO TEXT GENERATOR - Fixed-Depth Markov Edition
+// ================================================================
+//
+// Key Design:
+// 1. Fixed-depth Markov (default 3) for sentence structure
+// 2. Sentence length controlled by observed distribution
+// 3. Nested segments (QUOTE, PAREN, etc.) have their own chains
+// 4. Attribution is a post-QUOTE specialization, not in chain
+//
+// Entity types in chain:
+//   WORD:SHORT, WORD:MED, WORD:LONG  (binned word lengths)
+//   PAUSE:,  PAUSE:;  PAUSE::        (clause pauses)
+//   SEG:QUOTE, SEG:PAREN, etc.       (nested segment markers)
+//   END                               (sentence/segment end)
+//
+// ================================================================
 
 // ----------------------------------------------------------------
-// --- SHARED GLOBALS & UTILS ---
+// --- GLOBALS ---
 // ----------------------------------------------------------------
 
 class Globals {
     static final Random RND = new Random()
-    static final Set<String> VOWELS = new HashSet(['a', 'e', 'i', 'o', 'u', 'y', 'æ', 'ø', 'å', 'ä', 'ö', 'ü', 'é'])
-    static final Set<String> TERMINATORS = new HashSet(['.', '!', '?', '\u2026', '\u00B6']) // \u00B6 = Pilcrow
-    static final Set<String> PAUSES = new HashSet([',', ';', ':'])
-    static final Set<String> ALL_PUNCT = new HashSet(['.', '!', '?', ',', ':', ';',
-                                                      '\u2014', '-', '\u2026', '\u00B6', '\uE000',
-                                                      '\u0022', '\u201C', '\u201D',
-                                                      '\u0027', '\u2018', '\u2019',
-                                                      '(', ')', '[', ']', '{', '}'])
+    static final Set<String> VOWELS = ['a','e','i','o','u','y','æ','ø','å','ä','ö','ü','é'] as Set
+    static final Set<String> TERMINATORS = ['.', '!', '?', '\u2026'] as Set
+    static final Set<String> PAUSES = [',', ';', ':'] as Set
     static final int MAX_EFF_LEN = 8
+
+    // Markov context depth for sentence structure
+    static int STRUCT_CONTEXT_DEPTH = 3
+
+    // Special markers
+    static final String ATTR_MARKER = '\uE000'
+    static final String ATTR_END = '\uE001'
 }
 
 // ----------------------------------------------------------------
-// --- PUNCTUATION & TOKEN HANDLING ---
+// --- DATA CLASSES ---
 // ----------------------------------------------------------------
-
-@Canonical
-class PunctToken {
-    String type
-    String value
-    String context
-}
 
 @Canonical
 class Token {
-    String type = 'WORD'
-    String text = ''
-    String value = ''
-    String context = ''
-    int wordLength = 0
+    String type = 'WORD'     // WORD, TERM, PAUSE, OPEN, CLOSE, LINK, ATTR_START, ATTR_END
+    String text = ''         // Original text (for words)
+    String value = ''        // Punctuation character
+    String context = ''      // QUOTE, PAREN, SENTENCE, etc.
+    int wordLength = 0       // CV-structure length
 }
-
-class Punctuation {
-    static boolean isApostrophe(String fullText, int pos) {
-        if (pos <= 0 || pos >= fullText.length() - 1) return false
-        def before = fullText[pos - 1]
-        def after = fullText[pos + 1]
-        if (before =~ /\w/ && after =~ /\w/) return true
-        if (pos < fullText.length() - 1 && fullText[pos + 1] =~ /\d/) return true
-        return false
-    }
-
-    static PunctToken classifySingle(String s) {
-        switch(s) {
-            case '.': return new PunctToken('TERM', s, 'SENTENCE')
-            case '!': return new PunctToken('TERM', s, 'SENTENCE')
-            case '?': return new PunctToken('TERM', s, 'SENTENCE')
-            case '\u2026': return new PunctToken('TERM', s, 'ELLIPSIS')
-            case '\u00B6': return new PunctToken('TERM', s, 'NEWLINE')
-
-            case ',': return new PunctToken('PAUSE', s, 'CLAUSE')
-            case ';': return new PunctToken('PAUSE', s, 'CLAUSE')
-            case ':': return new PunctToken('PAUSE', s, 'INTRO')
-
-            case '\u2014': return new PunctToken('LINK', s, 'DASH')
-            case '-': return new PunctToken('LINK', s, 'HYPHEN')
-
-                // STRICT ATTRIBUTION DASH MARKER
-            case '\uE000': return new PunctToken('LINK', '\u2014', 'ATTR_MARKER')
-
-            case '(': return new PunctToken('OPEN', s, 'PAREN')
-            case ')': return new PunctToken('CLOSE', s, 'PAREN')
-            case '[': return new PunctToken('OPEN', s, 'BRACKET')
-            case ']': return new PunctToken('CLOSE', s, 'BRACKET')
-            case '{': return new PunctToken('OPEN', s, 'BRACE')
-            case '}': return new PunctToken('CLOSE', s, 'BRACE')
-
-            case '\u201C': return new PunctToken('OPEN', s, 'QUOTE')
-            case '\u201D': return new PunctToken('CLOSE', s, 'QUOTE')
-            case '\u2018': return new PunctToken('OPEN', s, 'SQUOTE')
-            case '\u2019': return new PunctToken('CLOSE', s, 'SQUOTE')
-
-            case '\u0022': return new PunctToken('UNKNOWN', s, 'QUOTE')
-            case '\u0027': return new PunctToken('UNKNOWN', s, 'SQUOTE')
-
-            default: return null
-        }
-    }
-
-    static String guessOpenClose(String prevText, String nextText) {
-        def prevEndsWord = prevText && prevText =~ /[\w.,!?]$/
-        def prevEndsSpace = !prevText || prevText =~ /[\s(\[{—\u00B6\uE000]$/
-        def nextStartsWord = nextText && nextText =~ /^\w/
-        def nextStartsSpace = !nextText || nextText =~ /^[\s)\]}.,:;!?—\u00B6\uE000]/
-
-        if (prevEndsSpace && nextStartsWord) return 'OPEN'
-        if (prevEndsWord && nextStartsSpace) return 'CLOSE'
-        return 'UNKNOWN'
-    }
-}
-
-class Utils {
-    static List tokenizeStructure(String word) {
-        def cleanWord = word.findAll { Character.isLetter(it as char) }.join('').toLowerCase()
-        if (!cleanWord) return []
-        def tokens = []
-        def curType = ''
-        def curContent = new StringBuilder()
-        cleanWord.each { c ->
-            def charStr = c.toString()
-            def type = Globals.VOWELS.contains(charStr) ? 'V' : 'C'
-            if (curType == '' || curType == type) { curType = type; curContent.append(charStr) }
-            else {
-                tokens << [curType, curContent.toString()]
-                curType = type
-                curContent = new StringBuilder().append(charStr)
-            }
-        }
-        if (curContent) tokens << [curType, curContent.toString()]
-        return tokens
-    }
-
-    static def ensureMap(Map map, String k1, String k2) {
-        map.computeIfAbsent(k1, { [:] }).computeIfAbsent(k2, { [:] })
-    }
-
-    static String normalizeQuotes(String text) {
-        def result = new StringBuilder()
-        def chars = text.toCharArray()
-        def STRAIGHT_DOUBLE = '\u0022' as char
-        def STRAIGHT_SINGLE = '\u0027' as char
-        def OPEN_DOUBLE = '\u201C'
-        def CLOSE_DOUBLE = '\u201D'
-        def OPEN_SINGLE = '\u2018'
-        def CLOSE_SINGLE = '\u2019'
-
-        for (int i = 0; i < chars.length; i++) {
-            def c = chars[i]
-            if (c == STRAIGHT_DOUBLE) {
-                def prev = i > 0 ? chars[i-1].toString() : ''
-                def next = i < chars.length - 1 ? chars[i+1].toString() : ''
-                def guess = Punctuation.guessOpenClose(prev, next)
-                result.append(guess == 'OPEN' ? OPEN_DOUBLE : CLOSE_DOUBLE)
-            } else if (c == STRAIGHT_SINGLE) {
-                if (Punctuation.isApostrophe(text, i)) {
-                    result.append(CLOSE_SINGLE)
-                } else {
-                    def prev = i > 0 ? chars[i-1].toString() : ''
-                    def next = i < chars.length - 1 ? chars[i+1].toString() : ''
-                    def guess = Punctuation.guessOpenClose(prev, next)
-                    result.append(guess == 'OPEN' ? OPEN_SINGLE : CLOSE_SINGLE)
-                }
-            } else {
-                result.append(c)
-            }
-        }
-        return result.toString()
-    }
-
-    static String normalizeEllipsis(String text) {
-        return text.replaceAll(/\.{3,}/, '\u2026').replaceAll(/\s*\u2026\s*/, '\u2026 ')
-    }
-
-    static String normalizeDashes(String text) {
-        return text.replaceAll(/--+/, '\u2014').replaceAll(/\s*\u2014\s*/, ' \u2014 ')
-    }
-
-    // Recursive Capitalization for Smart Outputs (handles quotes/brackets)
-    static String smartCaps(String s) {
-        if (!s) return s
-        // Find first actual letter index
-        def m = (s =~ /[a-zA-Z]/)
-        if (m.find()) {
-            int idx = m.start()
-            // Capitalize that char
-            return s.substring(0, idx) + s.substring(idx, idx+1).toUpperCase() + s.substring(idx+1)
-        }
-        return s
-    }
-}
-
-// ----------------------------------------------------------------
-// --- HIERARCHICAL SEGMENT MODEL ---
-// ----------------------------------------------------------------
 
 @Canonical
 class Segment {
     String type = 'SENTENCE'
     List<Integer> wordLengths = []
     List<Segment> children = []
-    int childInsertPosition = -1
-    String openPunct = ''
-    String closePunct = ''
+    int insertPosition = -1
     String terminator = ''
+    boolean startsWithQuote = false
+    Attribution attribution = null
 }
-
-// ----------------------------------------------------------------
-// --- STRUCTURE TOKENIZER & PARSER ---
-// ----------------------------------------------------------------
-
-class StructureTokenizer {
-    List<Token> tokenize(String text) {
-        def normalized = Utils.normalizeEllipsis(Utils.normalizeDashes(Utils.normalizeQuotes(text)))
-        def tokens = []
-        def words = normalized.split(/\s+/)
-        words.each { word -> if (word) tokens.addAll(tokenizeWord(word)) }
-        return tokens
-    }
-
-    List<Token> tokenizeWord(String word) {
-        def tokens = []
-        def current = new StringBuilder()
-        def chars = word.toCharArray()
-        int i = 0
-        while (i < chars.length) {
-            def c = chars[i].toString()
-            if (c == '\u2026' || c == '\u00B6' || c == '\uE000') {
-                if (current.length() > 0) { tokens << createWordToken(current.toString()); current = new StringBuilder() }
-                tokens << createPunctToken(Punctuation.classifySingle(c)); i++; continue
-            }
-            def punct = Punctuation.classifySingle(c)
-            if (punct) {
-                if (current.length() > 0) { tokens << createWordToken(current.toString()); current = new StringBuilder() }
-                tokens << createPunctToken(punct)
-            } else {
-                current.append(c)
-            }
-            i++
-        }
-        if (current.length() > 0) tokens << createWordToken(current.toString())
-        return tokens
-    }
-
-    Token createWordToken(String text) {
-        def struct = Utils.tokenizeStructure(text)
-        def hasVowel = text.toLowerCase().any { Globals.VOWELS.contains(it.toString()) }
-        if (!struct || !hasVowel) return null
-        return new Token(type: 'WORD', text: text, wordLength: struct.size())
-    }
-
-    Token createPunctToken(PunctToken p) {
-        return p ? new Token(type: p.type, value: p.value, context: p.context) : null
-    }
-}
-
-class StructureBalancer {
-    List<Token> balance(List<Token> tokens) {
-        resolveUnknownQuotes(tokens)
-        balanceStructures(tokens)
-        return tokens.findAll { it.type != 'DISCARD' }
-    }
-
-    void resolveUnknownQuotes(List<Token> tokens) {
-        tokens.eachWithIndex { tok, i ->
-            if (tok.type == 'UNKNOWN') {
-                def prevText = '', nextText = ''
-                for (int j = i - 1; j >= 0; j--) { if (tokens[j].type == 'WORD' || tokens[j].value) { prevText = tokens[j].text ?: tokens[j].value; break } }
-                for (int j = i + 1; j < tokens.size(); j++) { if (tokens[j].type == 'WORD' || tokens[j].value) { nextText = tokens[j].text ?: tokens[j].value; break } }
-                tok.type = (Punctuation.guessOpenClose(prevText, nextText) == 'OPEN') ? 'OPEN' : 'CLOSE'
-            }
-        }
-    }
-
-    void balanceStructures(List<Token> tokens) {
-        def sentenceStart = 0
-        for (int i = 0; i <= tokens.size(); i++) {
-            if (i < tokens.size() && tokens[i].type == 'TERM') {
-                int sentenceEnd = i + 1
-                while (sentenceEnd < tokens.size() && tokens[sentenceEnd].type == 'CLOSE') sentenceEnd++
-                if (sentenceEnd > sentenceStart) balanceSentence(tokens, sentenceStart, sentenceEnd)
-                sentenceStart = sentenceEnd
-            } else if (i == tokens.size() && i > sentenceStart) {
-                balanceSentence(tokens, sentenceStart, i)
-            }
-        }
-    }
-
-    void balanceSentence(List<Token> tokens, int start, int end) {
-        ['QUOTE', 'SQUOTE', 'PAREN', 'BRACKET', 'BRACE'].each { context ->
-            def stack = []
-            for (int i = start; i < end; i++) {
-                def tok = tokens[i]
-                if (tok.type == 'DISCARD') continue
-                if (tok.type == 'OPEN' && tok.context == context) stack.push(i)
-                else if (tok.type == 'CLOSE' && tok.context == context) {
-                    if (stack) stack.pop()
-                    else tok.type = 'DISCARD'
-                }
-            }
-            stack.reverse().each { openIdx -> tokens[openIdx].type = 'DISCARD' }
-        }
-    }
-}
-
-class StructureAnalyzer {
-    List<Segment> parseToSegments(List<Token> tokens) {
-        def segments = []
-        def stack = [new Segment(type: 'SENTENCE')]
-        def lastWasPause = false
-
-        tokens.each { tok ->
-            if (stack.isEmpty()) stack = [new Segment(type: 'SENTENCE')]
-            def current = stack.first()
-
-            switch (tok.type) {
-                case 'WORD':
-                    if (tok.wordLength > 0) {
-                        current.wordLengths << tok.wordLength
-                        lastWasPause = false
-                    }
-                    break
-
-                case 'OPEN':
-                    def child = new Segment(type: tok.context, openPunct: tok.value, childInsertPosition: current.wordLengths.size())
-                    current.children << child
-                    stack.push(child)
-                    lastWasPause = false
-                    break
-
-                case 'CLOSE':
-                    if (stack.size() > 1 && stack.first().type == tok.context) {
-                        stack.first().closePunct = tok.value
-                        stack.pop()
-                    }
-                    lastWasPause = false
-                    break
-
-                case 'TERM':
-                    if (stack.size() > 1 && stack.first().type in ['QUOTE', 'SQUOTE']) {
-                        stack.first().terminator = tok.value
-                    } else {
-                        while (stack.size() > 1) stack.pop()
-                        current = stack.first()
-                        current.terminator = tok.value
-                        if (current.wordLengths || current.children) segments << current
-                        stack = [new Segment(type: 'SENTENCE')]
-                    }
-                    lastWasPause = false
-                    break
-
-                case 'PAUSE':
-                    if (current.wordLengths && !lastWasPause) {
-                        current.children << new Segment(type: 'PAUSE', terminator: tok.value, childInsertPosition: current.wordLengths.size())
-                        lastWasPause = true
-                    }
-                    break
-
-                case 'LINK':
-                    if (tok.context == 'ATTR_MARKER') {
-                        // EXPLICIT ATTRIBUTION
-                        def attr = new Segment(
-                                type: 'ATTRIBUTION',
-                                openPunct: tok.value,
-                                childInsertPosition: current.wordLengths.size()
-                        )
-                        current.children << attr
-                        stack.push(attr)
-                    } else {
-                        // Standard mid-sentence dash (preserved if valid)
-                        def aside = new Segment(type: 'DASH_ASIDE', openPunct: tok.value, childInsertPosition: current.wordLengths.size())
-                        current.children << aside
-                        stack.push(aside)
-                    }
-                    lastWasPause = false
-                    break
-            }
-        }
-        return segments
-    }
-}
-
-// ----------------------------------------------------------------
-// --- CONFIGURATION ---
-// ----------------------------------------------------------------
 
 @Canonical
-class Config {
-    boolean analyze = false
-    boolean generate = false
-    String wordStatsFile = null
-    String sentenceStatsFile = null
-    String f_File = null
-    boolean uniqueMode = false
-    int pruneMinTokens = 0
-    int ngramMode = 3
-    int count = 20
-    boolean valid = false
-    String error = ""
-
-    String toString() {
-        if (analyze) {
-            return """
-=== ANALYSIS CONFIGURATION ===
-Input File        : ${f_File}
-Word Stats Out    : ${wordStatsFile}
-Sentence Stats Out: ${sentenceStatsFile ?: '(None)'}
-Unique Mode       : ${uniqueMode ? 'Active (Saving vocabulary list)' : 'Inactive'}
-=============================="""
-        } else {
-            return """
-=== GENERATION CONFIGURATION ===
-Word Stats In     : ${wordStatsFile}
-Sentence Stats In : ${sentenceStatsFile ?: '(None) - Word List Mode'}
-Output File       : ${f_File ?: 'STDOUT'}
-Pruning           : ${pruneMinTokens > 0 ? "Min ${pruneMinTokens} tokens" : 'Disabled'}
-N-Gram Mode       : ${ngramMode} (Initial Target)
-Unique Mode       : ${uniqueMode ? 'Active (Fallback: Tri->Bi->Uni)' : 'Inactive'}
-Count             : ${count}
-================================"""
-        }
-    }
+class Attribution {
+    List<Integer> nameLengths = []
+    List<Integer> titleLengths = []
+    boolean hasTitle = false
 }
 
-def parseArgs(String[] args) {
-    def cfg = new Config()
-    def i = 0
-    while (i < args.length) {
-        def arg = args[i]
-        switch (arg) {
-            case '-a': cfg.analyze = true; break
-            case '-g': cfg.generate = true; break
-            case '-w': cfg.wordStatsFile = args[++i]; break
-            case '-s': cfg.sentenceStatsFile = args[++i]; break
-            case '-f': cfg.f_File = args[++i]; break
-            case '-u': cfg.uniqueMode = true; break
-            case '-p': cfg.pruneMinTokens = args[++i].toInteger(); break
-            case '-c': cfg.count = args[++i].toInteger(); break
-            case '-1': cfg.ngramMode = 1; break
-            case '-2': case '-b': cfg.ngramMode = 2; break
-            case '-3': case '-t': cfg.ngramMode = 3; break
-        }
-        i++
-    }
-    if (cfg.analyze && cfg.generate) { cfg.error = "Ambiguous Mode: Select either -a or -g."; return cfg }
-    if (!cfg.analyze && !cfg.generate) { cfg.error = "No Mode Specified: Use -a or -g."; return cfg }
-    if (cfg.analyze) {
-        if (!cfg.f_File) { cfg.error = "Analysis requires Source Text (-f)."; return cfg }
-        if (!cfg.wordStatsFile) { cfg.error = "Analysis requires Output File (-w)."; return cfg }
-    }
-    if (cfg.generate) {
-        if (!cfg.wordStatsFile) { cfg.error = "Generation requires Input Stats (-w)."; return cfg }
-    }
-    cfg.valid = true
-    return cfg
-}
+// ----------------------------------------------------------------
+// --- WEIGHTED SELECTOR ---
+// ----------------------------------------------------------------
 
 @Canonical
 class WeightedSelector {
     List<String> keys = []
-    List<Long> cumulativeWeights = []
-    long totalWeight = 0
-    WeightedSelector(Map<String, Integer> map) {
-        long runningTotal = 0L
-        map.sort { -it.value }.each { key, weight ->
-            if (weight > 0) { this.keys.add(key); runningTotal += weight; this.cumulativeWeights.add(runningTotal) }
+    List<Long> cumulative = []
+    long total = 0
+
+    WeightedSelector(Map<String, Integer> freq) {
+        long running = 0L
+        freq.sort { -it.value }.each { k, v ->
+            if (v > 0) {
+                keys << k
+                running += v
+                cumulative << running
+            }
         }
-        this.totalWeight = runningTotal
+        total = running
     }
-    String select(Random rnd) {
-        if (totalWeight <= 0) return null
-        long target = (long) (rnd.nextDouble() * totalWeight) + 1
-        int index = Collections.binarySearch(cumulativeWeights, target)
-        if (index < 0) index = -index - 1
-        if (index >= keys.size()) index = keys.size() - 1
-        return keys[index]
+
+    String select() {
+        if (total <= 0 || keys.isEmpty()) return null
+        long target = (long)(Globals.RND.nextDouble() * total) + 1
+        int idx = Collections.binarySearch(cumulative, target)
+        if (idx < 0) idx = -idx - 1
+        return keys[Math.min(idx, keys.size() - 1)]
     }
+
+    boolean hasKey(String k) { keys.contains(k) }
 }
 
 // ----------------------------------------------------------------
-// --- STRUCTURAL MARKOV LOGIC ---
+// --- UTILITIES ---
 // ----------------------------------------------------------------
 
-class StructuralMarkovAnalyzer {
-    Map<String, Map<String, Integer>> markovChain = [:]
-    Map<String, List<Integer>> lengthStats = [:]
-    Map<String, List<String>> segmentStarts = [:]
-    Map<String, Map<String, Integer>> openPunctStats = [:]
-    Map<String, Map<String, Integer>> closePunctStats = [:]
+class Utils {
+    static List tokenizeCV(String word) {
+        def clean = word.findAll { Character.isLetter(it as char) }.join('').toLowerCase()
+        if (!clean) return []
+        def tokens = []
+        def curType = null
+        def curContent = new StringBuilder()
 
-    int contextDepth = 3
+        clean.each { c ->
+            def type = Globals.VOWELS.contains(c) ? 'V' : 'C'
+            if (curType == type) {
+                curContent.append(c)
+            } else {
+                if (curType != null) tokens << [curType, curContent.toString()]
+                curType = type
+                curContent = new StringBuilder(c)
+            }
+        }
+        if (curType != null) tokens << [curType, curContent.toString()]
+        return tokens
+    }
 
-    String binWordLen(int len) {
+    static String binWordLength(int len) {
         if (len <= 3) return "SHORT"
-        if (len <= 7) return "MED"
+        if (len <= 6) return "MED"
         return "LONG"
     }
 
-    String encodeEntity(String type, String val) { return "${type}:${val}" }
-
-    void train(List<Segment> parsedSegments) {
-        parsedSegments.each { rootSeg -> processSegment(rootSeg) }
+    static int unbinWordLength(String bin) {
+        switch (bin) {
+            case "SHORT": return Globals.RND.nextInt(3) + 1    // 1-3
+            case "MED":   return Globals.RND.nextInt(4) + 4    // 4-7
+            case "LONG":  return Globals.RND.nextInt(4) + 8    // 8-11
+            default:      return Globals.RND.nextInt(4) + 4    // default MED
+        }
     }
 
-    void processSegment(Segment seg) {
-        if (seg.openPunct) openPunctStats.computeIfAbsent(seg.type, {[:]}).merge(seg.openPunct, 1, Integer::sum)
-        if (seg.closePunct) closePunctStats.computeIfAbsent(seg.type, {[:]}).merge(seg.closePunct, 1, Integer::sum)
-
-        int entityCount = seg.wordLengths.size() + seg.children.size()
-        lengthStats.computeIfAbsent(seg.type, {[]}).add(entityCount)
-
-        Map<Integer, String> streamMap = [:]
-        seg.wordLengths.eachWithIndex { len, i -> streamMap[i] = encodeEntity("WORD", binWordLen(len)) }
-        seg.children.each { child ->
-            processSegment(child)
-            String val = (child.type == 'PAUSE') ? (child.terminator ?: ',') : child.type
-            streamMap[child.childInsertPosition] = encodeEntity((child.type == 'PAUSE' ? 'PAUSE' : 'SEGMENT'), val)
+    static String smartCaps(String s) {
+        if (!s) return s
+        def m = (s =~ /[a-zA-Z]/)
+        if (m.find()) {
+            int i = m.start()
+            return s.substring(0, i) + s[i].toUpperCase() + s.substring(i + 1)
         }
-
-        List<String> stream = []
-        streamMap.sort { it.key }.each { k, v -> stream << v }
-        updateChain(seg.type, stream)
+        return s
     }
 
-    void updateChain(String segType, List<String> stream) {
-        if (stream.isEmpty()) return
-
-        def startCtx = (0..<Math.min(stream.size(), contextDepth)).collect { stream[it] }.join("|")
-        segmentStarts.computeIfAbsent(segType, {[]}).add(startCtx)
-
-        for (int i = 0; i < stream.size(); i++) {
-            def contextList = []
-            for (int j = 1; j <= contextDepth; j++) {
-                if (i - j >= 0) contextList.add(0, stream[i-j])
-                else contextList.add(0, "START")
-            }
-            def key = "${segType}|" + contextList.join("|")
-            def next = stream[i]
-            markovChain.computeIfAbsent(key, {[:]}).merge(next, 1, Integer::sum)
-        }
-
-        def lastCtx = []
-        for (int j = 0; j < contextDepth; j++) {
-            def idx = stream.size() - 1 - j
-            if (idx >= 0) lastCtx.add(0, stream[idx])
-            else lastCtx.add(0, "START")
-        }
-        def endKey = "${segType}|" + lastCtx.join("|")
-        markovChain.computeIfAbsent(endKey, {[:]}).merge("END", 1, Integer::sum)
+    static String titleCase(String s) {
+        if (!s || s.length() == 0) return s
+        return s[0].toUpperCase() + (s.length() > 1 ? s.substring(1) : '')
     }
 }
 
 // ----------------------------------------------------------------
-// --- ANALYZER ---
+// --- PUNCTUATION ---
 // ----------------------------------------------------------------
 
-class Analyzer {
-    StructureTokenizer tokenizer = new StructureTokenizer()
-    StructureBalancer balancer = new StructureBalancer()
-    StructureAnalyzer structureAnalyzer = new StructureAnalyzer()
-    StructuralMarkovAnalyzer markovAnalyzer = new StructuralMarkovAnalyzer()
+class Punctuation {
+    static boolean isApostrophe(String text, int pos) {
+        if (pos <= 0 || pos >= text.length() - 1) return false
+        return text[pos-1] ==~ /\w/ && text[pos+1] ==~ /\w/
+    }
 
-    Map<String, Integer> lengthStartStats = [:]
-    Map<String, Map<String, Map<String, Integer>>> startTokens = [:]
-    Map<String, Map<String, Map<String, Integer>>> innerTokens = [:]
-    Map<String, Map<String, Map<String, Integer>>> lastTokens = [:]
-    Map<String, Map<String, Map<String, Integer>>> bigramStart = [:]
-    Map<String, Map<String, Map<String, Integer>>> bigramInner = [:]
-    Map<String, Map<String, Map<String, Integer>>> bigramLast = [:]
-    Map<String, Map<String, Map<String, Integer>>> trigramInner = [:]
-    Map<String, Map<String, Map<String, Integer>>> trigramLast = [:]
+    static Map<String,String> classify(String c) {
+        switch (c) {
+            case '.': case '!': case '?':
+                return [type: 'TERM', value: c, context: 'SENTENCE']
+            case '\u2026':
+                return [type: 'TERM', value: c, context: 'ELLIPSIS']
+            case ',': case ';':
+                return [type: 'PAUSE', value: c, context: 'CLAUSE']
+            case ':':
+                return [type: 'PAUSE', value: c, context: 'INTRO']
+            case '\u2014':
+                return [type: 'LINK', value: c, context: 'DASH']
+            case '-':
+                return [type: 'LINK', value: c, context: 'HYPHEN']
+            case '(': return [type: 'OPEN', value: c, context: 'PAREN']
+            case ')': return [type: 'CLOSE', value: c, context: 'PAREN']
+            case '[': return [type: 'OPEN', value: c, context: 'BRACKET']
+            case ']': return [type: 'CLOSE', value: c, context: 'BRACKET']
+            case '\u201C': case '\u201D': case '"':
+                return [type: 'QUOTE', value: '"', context: 'QUOTE']
+            case '\u2018': case '\u2019': case '\'':
+                return [type: 'SQUOTE', value: "'", context: 'SQUOTE']
+            case Globals.ATTR_MARKER:
+                return [type: 'ATTR_START', value: '\u2014', context: 'ATTR']
+            case Globals.ATTR_END:
+                return [type: 'ATTR_END', value: '', context: 'ATTR']
+            default:
+                return null
+        }
+    }
 
-    Set<String> vocabulary = new HashSet<>()
-    Map<String, Map<String, Integer>> transitions = [:]
+    static String guessQuoteDir(String prev, String next) {
+        def prevSpace = !prev || prev ==~ /.*[\s(\[{—]$/
+        def nextWord = next && next ==~ /^\w.*/
+        return (prevSpace && nextWord) ? 'OPEN' : 'CLOSE'
+    }
+}
 
-    void process(Config cfg) {
-        println "📖 Analyzing source..."
-        def fileContent = new File(cfg.f_File).getText("UTF-8")
-        if (fileContent.length() > 0 && fileContent.charAt(0) == '\uFEFF') fileContent = fileContent.substring(1)
+// ----------------------------------------------------------------
+// --- TEXT PREPROCESSOR ---
+// ----------------------------------------------------------------
 
-        def text = fileContent
-        text = text.replaceAll(/--+/, '\u2014') // Normalize all dashes to em-dash
+class Preprocessor {
+    String process(String text) {
+        if (!text) return ''
 
-        // 1. IDENTIFY ATTRIBUTIONS (Quote + Space* + Dash + NoSpace + Words + EndOfLine)
-        // Replaces the Dash with \uE000 and the EndOfLine with \u00B6
-        // This PROTECTS valid attributions from pruning.
-        // Regex strictness: (?=\S) ensures dash is followed by a non-space char (Start of Name)
-        text = text.replaceAll(/(?m)([”"])\s*\u2014(?=\S)(.*?)(\r?\n|$)/, '$1 \uE000 $2 \u00B6 ')
+        // BOM
+        if (text.charAt(0) == '\uFEFF') text = text.substring(1)
 
-        // 2. PRUNE INVALID DASHES
-        // "Any other dash preceded by whitespace and followed by non-whitespace is removed entirely"
-        // Pattern: [Space] [Dash] [Non-Space]
-        // Replacement: [Space] (keeps words separated but removes the dash)
-        text = text.replaceAll(/(\s)\u2014(?=\S)/, '$1')
+        // Normalize dashes
+        text = text.replaceAll(/--+/, '\u2014')
 
-        // 3. PARAGRAPH & NEWLINE HANDLING
-        // Double Newline = Paragraph Break (Sentence Terminator)
-        text = text.replaceAll(/\r?\n\r?\n/, " . ")
-        // Single Newline = Space (Paragraph Wrap), UNLESS it matches the \u00B6 we just added
-        text = text.replaceAll(/\r?\n/, " ")
+        // Normalize quotes
+        text = normalizeQuotes(text)
 
-        def tokens = tokenizer.tokenize(text)
-        tokens = balancer.balance(tokens.findAll { it != null })
+        // Mark attributions BEFORE other processing
+        // Attribution = closing quote + em-dash + Name + newline
+        // The attribution serves as sentence terminator
+        text = markAttributions(text)
 
-        int wordsProcessed = 0
-        tokens.findAll { it.type == 'WORD' && it.wordLength > 0 }.each { tok ->
-            def clean = tok.text.findAll { Character.isLetter(it as char) }.join('').toLowerCase()
-            def struct = Utils.tokenizeStructure(tok.text)
-            if (struct) {
-                wordsProcessed++
-                if (cfg.uniqueMode) vocabulary.add(clean)
-                def len = struct.size()
-                def effLen = Math.min(len, Globals.MAX_EFF_LEN).toString()
-                def startType = struct[0][0]
-                def fusedKey = "${len}:${startType}"
-                lengthStartStats[fusedKey] = (lengthStartStats[fusedKey] ?: 0) + 1
+        // Remove invalid dashes: space-dash-nonspace (not attribution)
+        text = text.replaceAll(/(?<!\S)\u2014(?=\S)(?!\uE000)/, '')
 
-                struct.eachWithIndex { t, idx ->
-                    def content = t[1]
-                    if (idx == 0) {
-                        Utils.ensureMap(startTokens, effLen, startType)[content] = (Utils.ensureMap(startTokens, effLen, startType)[content] ?: 0) + 1
-                    } else {
-                        def prev = struct[idx-1]; def prevContent = prev[1]; def prevType = prev[0]
-                        def baseMap = (idx == len - 1) ? lastTokens : innerTokens
-                        Utils.ensureMap(baseMap, effLen, prevType)[content] = (Utils.ensureMap(baseMap, effLen, prevType)[content] ?: 0) + 1
-                        def bgMap = (idx == len - 1) ? bigramLast : (idx == 1) ? bigramStart : bigramInner
-                        Utils.ensureMap(bgMap, effLen, prevContent)[content] = (Utils.ensureMap(bgMap, effLen, prevContent)[content] ?: 0) + 1
-                        if (idx >= 2) {
-                            def prev2 = struct[idx-2][1]
-                            def tgKey = "${prev2}:${prevContent}"
-                            def tgMap = (idx == len - 1) ? trigramLast : trigramInner
-                            Utils.ensureMap(tgMap, effLen, tgKey)[content] = (Utils.ensureMap(tgMap, effLen, tgKey)[content] ?: 0) + 1
+        // Normalize valid dashes (space on both sides)
+        text = text.replaceAll(/\s*\u2014\s*/, ' \u2014 ')
+
+        // Process line by line to handle newlines correctly
+        def lines = text.split(/\r?\n/)
+        def result = new StringBuilder()
+
+        for (int i = 0; i < lines.length; i++) {
+            def line = lines[i].trim()
+            if (!line) {
+                // Empty line (paragraph break)
+                // Only add period if previous content doesn't end with terminator
+                if (result.length() > 0) {
+                    def lastChar = result.charAt(result.length() - 1)
+
+                    // Check if we need to add a terminator
+                    if (lastChar != '.' && lastChar != '!' && lastChar != '?' &&
+                            lastChar != (Globals.ATTR_END as char)) {
+                        // Need to add period
+                        // If last char is closing quote, insert period before it
+                        if (lastChar == '\u201D' || lastChar == ('"' as char)) {
+                            result.deleteCharAt(result.length() - 1)
+                            result.append('.').append(lastChar)
+                        } else {
+                            result.append('.')
                         }
+                    }
+                }
+                continue
+            }
+
+            // Add space before this line if there's previous content
+            if (result.length() > 0) {
+                result.append(' ')
+            }
+            result.append(line)
+        }
+
+        return result.toString().replaceAll(/\s+/, ' ').trim()
+    }
+
+    private String normalizeQuotes(String text) {
+        def sb = new StringBuilder()
+        def chars = text.toCharArray()
+
+        for (int i = 0; i < chars.length; i++) {
+            def c = chars[i]
+            if (c == '"' as char) {
+                def prev = i > 0 ? chars[i-1].toString() : ''
+                def next = i < chars.length-1 ? chars[i+1].toString() : ''
+                sb.append(Punctuation.guessQuoteDir(prev, next) == 'OPEN' ? '\u201C' : '\u201D')
+            } else if (c == '\'' as char) {
+                if (Punctuation.isApostrophe(text, i)) {
+                    sb.append('\u2019')
+                } else {
+                    def prev = i > 0 ? chars[i-1].toString() : ''
+                    def next = i < chars.length-1 ? chars[i+1].toString() : ''
+                    sb.append(Punctuation.guessQuoteDir(prev, next) == 'OPEN' ? '\u2018' : '\u2019')
+                }
+            } else {
+                sb.append(c)
+            }
+        }
+        return sb.toString()
+    }
+
+    private String markAttributions(String text) {
+        // Attribution patterns:
+        // 1. "Quote text." —Name[, title]  (quoted attribution)
+        // 2. Sentence text. —Name[, title]  (unquoted attribution like sayings/teachings)
+        // Name may start with * for italics (like *Song of All*)
+
+        // Pattern 1: Quote + em-dash + Name at end of line
+        // [*]? allows optional asterisk for italic titles
+        def quotePattern = ~/([""\u201C\u201D])\s*\u2014\s*([*]?[A-Z][^\r\n]*?)(\r?\n|$)/
+        text = text.replaceAll(quotePattern) { match, quote, attrText, lineEnd ->
+            "${quote} ${Globals.ATTR_MARKER}${attrText.trim()}${Globals.ATTR_END} "
+        }
+
+        // Pattern 2: Terminator + em-dash + Name at end of line (for unquoted attributions)
+        def unquotedPattern = ~/([.!?])\s*\u2014\s*([*]?[A-Z][^\r\n\uE000]*?)(\r?\n|$)/
+        text = text.replaceAll(unquotedPattern) { match, term, attrText, lineEnd ->
+            "${term} ${Globals.ATTR_MARKER}${attrText.trim()}${Globals.ATTR_END} "
+        }
+
+        return text
+    }
+}
+
+// ----------------------------------------------------------------
+// --- TOKENIZER ---
+// ----------------------------------------------------------------
+
+class Tokenizer {
+    List<Token> tokenize(String text) {
+        def tokens = []
+        text.split(/\s+/).each { word ->
+            if (word) tokens.addAll(tokenizeWord(word))
+        }
+        return tokens.findAll { it != null }
+    }
+
+    private List<Token> tokenizeWord(String word) {
+        def tokens = []
+        def current = new StringBuilder()
+        def chars = word.toCharArray()
+
+        for (int i = 0; i < chars.length; i++) {
+            def c = chars[i].toString()
+
+            // Special markers always get tokenized
+            if (c == Globals.ATTR_MARKER || c == Globals.ATTR_END) {
+                if (current) {
+                    def wt = makeWordToken(current.toString())
+                    if (wt) tokens << wt
+                    current = new StringBuilder()
+                }
+                def p = Punctuation.classify(c)
+                if (p) tokens << new Token(type: p.type, value: p.value, context: p.context)
+                continue
+            }
+
+            // Check if this is an apostrophe (single quote between word chars)
+            // Apostrophe = U+2019 or straight quote with word char on both sides
+            def straightQuote = "'"
+            if ((c == '\u2019' || c == straightQuote || c == '\u2018') &&
+                    i > 0 && i < chars.length - 1) {
+                def prev = chars[i-1].toString()
+                def next = chars[i+1].toString()
+                if (prev.matches('[a-zA-Z0-9]') && next.matches('[a-zA-Z0-9]')) {
+                    // It is an apostrophe - keep it as part of the word
+                    current.append(c)
+                    continue
+                }
+            }
+
+            def p = Punctuation.classify(c)
+            if (p) {
+                if (current) {
+                    def wt = makeWordToken(current.toString())
+                    if (wt) tokens << wt
+                    current = new StringBuilder()
+                }
+                tokens << new Token(type: p.type, value: p.value, context: p.context)
+            } else {
+                current.append(c)
+            }
+        }
+
+        if (current) {
+            def wt = makeWordToken(current.toString())
+            if (wt) tokens << wt
+        }
+
+        return tokens
+    }
+
+    private Token makeWordToken(String text) {
+        def cv = Utils.tokenizeCV(text)
+        if (!cv) return null
+        def hasVowel = text.toLowerCase().any { Globals.VOWELS.contains(it) }
+        if (!hasVowel) return null
+        return new Token(type: 'WORD', text: text, wordLength: cv.size())
+    }
+}
+
+// ----------------------------------------------------------------
+// --- STRUCTURE PARSER ---
+// ----------------------------------------------------------------
+
+class StructureParser {
+    // Quote state tracking
+    private Map<String, Integer> quoteStack = [QUOTE: 0, SQUOTE: 0]
+
+    List<Segment> parse(List<Token> tokens) {
+        def segments = []
+        def current = new Segment(type: 'SENTENCE')
+        def stack = [current]
+        quoteStack = [QUOTE: 0, SQUOTE: 0]
+
+        boolean inAttr = false
+        Attribution attr = null
+        boolean inTitle = false
+
+        tokens.eachWithIndex { tok, idx ->
+            switch (tok.type) {
+                case 'WORD':
+                    if (inAttr) {
+                        if (inTitle) attr.titleLengths << tok.wordLength
+                        else attr.nameLengths << tok.wordLength
+                    } else {
+                        stack[0].wordLengths << tok.wordLength
+                    }
+                    break
+
+                case 'QUOTE':
+                case 'SQUOTE':
+                    handleQuote(tok.type, stack, tokens, idx, current)
+                    break
+
+                case 'OPEN':
+                    def seg = new Segment(type: tok.context, insertPosition: stack[0].wordLengths.size())
+                    stack[0].children << seg
+                    stack.add(0, seg)
+                    break
+
+                case 'CLOSE':
+                    if (stack.size() > 1 && stack[0].type == tok.context) {
+                        stack.remove(0)
+                    }
+                    break
+
+                case 'LINK':
+                    if (tok.context == 'DASH') {
+                        handleDash(stack, tokens, idx)
+                    }
+                    break
+
+                case 'ATTR_START':
+                    // Attribution is valid if we're at sentence level (stack.size=1)
+                    if (stack.size() == 1) {
+                        inAttr = true
+                        attr = new Attribution()
+                        inTitle = false
+                    }
+                    break
+
+                case 'ATTR_END':
+                    // Attribution end always marks sentence boundary
+                    if (inAttr && attr) {
+                        current.attribution = attr
+                    }
+                    // Add segment if it has content OR has attribution
+                    if (current.wordLengths || current.children || current.attribution) {
+                        segments << current
+                    }
+                    current = new Segment(type: 'SENTENCE')
+                    stack = [current]
+                    quoteStack = [QUOTE: 0, SQUOTE: 0]
+                    inAttr = false
+                    attr = null
+                    break
+
+                case 'PAUSE':
+                    if (inAttr && tok.value == ',') {
+                        inTitle = true
+                        attr.hasTitle = true
+                    } else if (!inAttr && stack[0].wordLengths) {
+                        def pause = new Segment(type: 'PAUSE', terminator: tok.value,
+                                insertPosition: stack[0].wordLengths.size())
+                        stack[0].children << pause
+                    }
+                    break
+
+                case 'TERM':
+                    if (!inAttr) {
+                        // Check if we're inside a quote (anywhere on stack)
+                        def quoteOnStack = stack.find { it.type in ['QUOTE', 'SQUOTE'] }
+
+                        if (quoteOnStack) {
+                            // Terminator is inside a quote - store it with the quote
+                            // Don't end sentence - wait for quote to close
+                            quoteOnStack.terminator = tok.value
+                        } else {
+                            // Terminator at sentence level (possibly inside DASH_ASIDE)
+                            // This ends the sentence (and any open DASH_ASIDE)
+                            current.terminator = tok.value
+
+                            // Close any open segments (like DASH_ASIDE)
+                            while (stack.size() > 1) {
+                                stack.remove(0)
+                            }
+                            quoteStack = [QUOTE: 0, SQUOTE: 0]
+
+                            if (current.wordLengths || current.children) {
+                                segments << current
+                            }
+                            current = new Segment(type: 'SENTENCE')
+                            stack = [current]
+                        }
+                    }
+                    break
+            }
+        }
+
+        // Handle unterminated sentence
+        if (current.wordLengths || current.children) {
+            segments << current
+        }
+
+        return segments
+    }
+
+    private void handleQuote(String qtype, List<Segment> stack, List<Token> tokens, int idx, Segment current) {
+        // SQUOTE is only valid inside a QUOTE segment
+        // If we see SQUOTE and we're not inside a QUOTE, ignore it
+        if (qtype == 'SQUOTE') {
+            boolean insideQuote = stack.any { it.type == 'QUOTE' }
+            if (!insideQuote) {
+                return  // Ignore single quotes outside double quotes
+            }
+        }
+
+        // Determine open/close from context
+        def isOpen = shouldOpen(qtype, tokens, idx)
+
+        if (isOpen) {
+            quoteStack[qtype]++
+            def seg = new Segment(type: qtype, insertPosition: stack[0].wordLengths.size())
+
+            // Check if quote starts sentence (only for QUOTE, not SQUOTE)
+            if (qtype == 'QUOTE' && stack.size() == 1 && stack[0].wordLengths.isEmpty() && stack[0].children.isEmpty()) {
+                current.startsWithQuote = true
+            }
+
+            stack[0].children << seg
+            stack.add(0, seg)
+        } else {
+            // Closing a quote - pop any nested segments (like DASH_ASIDE) first
+            if (quoteStack[qtype] > 0) {
+                // Find the quote on the stack
+                def quoteIdx = stack.findIndexOf { it.type == qtype }
+                if (quoteIdx >= 0) {
+                    // Pop everything up to and including the quote
+                    while (stack.size() > 1 && stack[0].type != qtype) {
+                        stack.remove(0)
+                    }
+                    if (stack.size() > 1 && stack[0].type == qtype) {
+                        quoteStack[qtype]--
+                        stack.remove(0)
                     }
                 }
             }
         }
+    }
 
-        if (cfg.sentenceStatsFile) {
-            def segments = structureAnalyzer.parseToSegments(tokens)
-            markovAnalyzer.train(segments)
-            segments.each { s ->
-                if (s.terminator) transitions.computeIfAbsent('TERM', {[:]}).merge(s.terminator, 1, Integer::sum)
+    private boolean shouldOpen(String qtype, List<Token> tokens, int idx) {
+        // Simple logic: if we have an unmatched open quote of this type, this should close it
+        if (quoteStack[qtype] > 0) return false
+        return true
+    }
+
+    private void handleDash(List<Segment> stack, List<Token> tokens, int idx) {
+        // Don't open a dash-aside if the next token is a quote (end of quoted speech with dash)
+        if (idx + 1 < tokens.size() && tokens[idx + 1].type in ['QUOTE', 'SQUOTE']) {
+            return  // Skip - this is likely trailing dash in "I—" pattern
+        }
+
+        // Dash-aside toggle: if one is open, close it; otherwise open new
+        def hasOpen = stack.any { it.type == 'DASH_ASIDE' }
+        if (hasOpen) {
+            while (stack.size() > 1 && stack[0].type != 'DASH_ASIDE') {
+                stack.remove(0)
+            }
+            if (stack.size() > 1) stack.remove(0)
+        } else {
+            def aside = new Segment(type: 'DASH_ASIDE', insertPosition: stack[0].wordLengths.size())
+            stack[0].children << aside
+            stack.add(0, aside)
+        }
+    }
+}
+
+// ----------------------------------------------------------------
+// --- MARKOV CHAIN ANALYZER ---
+// ----------------------------------------------------------------
+
+class MarkovAnalyzer {
+    // Per-segment-type chains: type -> (context -> (next -> count))
+    Map<String, Map<String, Map<String, Integer>>> chains = [:]
+
+    // Length distributions per segment type
+    Map<String, List<Integer>> lengthDists = [:]
+
+    // Terminator distribution
+    Map<String, Integer> terminators = [:]
+
+    // Attribution stats
+    int quoteSentences = 0          // Sentences starting with quote
+    int quoteSentencesWithAttr = 0  // Those that have attribution
+    List<Integer> attrNameWordCounts = []   // How many words in each name
+    List<Integer> attrNameLengths = []      // Individual word lengths
+    List<Integer> attrTitleWordCounts = []  // How many words in each title
+    List<Integer> attrTitleLengths = []     // Individual word lengths
+    double attrTitleProbability = 0.0
+
+    void analyze(List<Segment> segments) {
+        segments.each { seg ->
+            analyzeSegment(seg)
+
+            // Track attribution stats
+            if (seg.startsWithQuote) {
+                quoteSentences++
+            }
+
+            // Count attributions (both quoted and unquoted)
+            if (seg.attribution) {
+                if (seg.startsWithQuote) {
+                    quoteSentencesWithAttr++
+                }
+                // Store word count AND individual lengths
+                attrNameWordCounts << seg.attribution.nameLengths.size()
+                attrNameLengths.addAll(seg.attribution.nameLengths)
+                if (seg.attribution.hasTitle) {
+                    attrTitleWordCounts << seg.attribution.titleLengths.size()
+                    attrTitleLengths.addAll(seg.attribution.titleLengths)
+                }
+            }
+
+            // Track terminators
+            if (seg.terminator && !seg.attribution) {
+                terminators.merge(seg.terminator, 1, { a, b -> a + b })
             }
         }
 
-        println "\n📊 Analysis Stats:"
-        println "   Words Processed: ${wordsProcessed}"
-        if (cfg.uniqueMode) println "   Unique Vocabulary: ${vocabulary.size()} words stored"
-        if (cfg.sentenceStatsFile) {
-            println "   Structural Rules: ${markovAnalyzer.markovChain.size()} contexts learned"
-            println "   Structure Types: ${markovAnalyzer.lengthStats.keySet()}"
+        // Calculate attribution probability
+        if (quoteSentences > 0) {
+            attrTitleProbability = quoteSentencesWithAttr > 0 ?
+                    (attrTitleWordCounts.size() / (double)quoteSentencesWithAttr) : 0.0
         }
-        println ""
     }
 
-    void save(Config cfg) {
-        def wordData = [
-                vocabulary: (cfg.uniqueMode ? vocabulary : null),
+    private void analyzeSegment(Segment seg) {
+        def type = seg.type
+
+        // Build entity stream
+        def stream = buildEntityStream(seg)
+
+        if (stream.isEmpty()) return
+
+        // Track length
+        lengthDists.computeIfAbsent(type, {[]}) << stream.size()
+
+        // Build n-gram chain
+        def depth = Globals.STRUCT_CONTEXT_DEPTH
+
+        for (int i = 0; i < stream.size(); i++) {
+            def ctx = buildContext(stream, i, depth)
+            def next = stream[i]
+
+            chains.computeIfAbsent(type, {[:]})
+                    .computeIfAbsent(ctx, {[:]})
+                    .merge(next, 1, { a, b -> a + b })
+        }
+
+        // Add END transition
+        def endCtx = buildContext(stream, stream.size(), depth)
+        chains.computeIfAbsent(type, {[:]})
+                .computeIfAbsent(endCtx, {[:]})
+                .merge('END', 1, { a, b -> a + b })
+
+        // Recurse into children
+        seg.children.each { child ->
+            if (child.type != 'PAUSE') {
+                analyzeSegment(child)
+            }
+        }
+    }
+
+    private List<String> buildEntityStream(Segment seg) {
+        def stream = []
+        def childMap = [:] // position -> child segment
+
+        seg.children.each { child ->
+            if (child.type == 'PAUSE') {
+                childMap[child.insertPosition] = "PAUSE:${child.terminator}"
+            } else {
+                childMap[child.insertPosition] = "SEG:${child.type}"
+            }
+        }
+
+        seg.wordLengths.eachWithIndex { len, i ->
+            // Insert any children at this position first
+            if (childMap.containsKey(i)) {
+                stream << childMap[i]
+            }
+            stream << "WORD:${Utils.binWordLength(len)}"
+        }
+
+        // Any children at end position
+        if (childMap.containsKey(seg.wordLengths.size())) {
+            stream << childMap[seg.wordLengths.size()]
+        }
+
+        return stream
+    }
+
+    private String buildContext(List<String> stream, int pos, int depth) {
+        def ctx = []
+        for (int i = depth; i >= 1; i--) {
+            int idx = pos - i
+            ctx << (idx >= 0 ? stream[idx] : 'START')
+        }
+        return ctx.join('|')
+    }
+
+    Map toJson() {
+        return [
+                chains: chains,
+                lengthDists: lengthDists,
+                terminators: terminators,
+                quoteSentences: quoteSentences,
+                quoteSentencesWithAttr: quoteSentencesWithAttr,
+                attrNameWordCounts: attrNameWordCounts,
+                attrNameLengths: attrNameLengths,
+                attrTitleWordCounts: attrTitleWordCounts,
+                attrTitleLengths: attrTitleLengths,
+                contextDepth: Globals.STRUCT_CONTEXT_DEPTH
+        ]
+    }
+
+    void fromJson(Map json) {
+        chains = json.chains ?: [:]
+        lengthDists = json.lengthDists ?: [:]
+        terminators = json.terminators ?: [:]
+        quoteSentences = json.quoteSentences ?: 0
+        quoteSentencesWithAttr = json.quoteSentencesWithAttr ?: 0
+        attrNameWordCounts = json.attrNameWordCounts ?: []
+        attrNameLengths = json.attrNameLengths ?: []
+        attrTitleWordCounts = json.attrTitleWordCounts ?: []
+        attrTitleLengths = json.attrTitleLengths ?: []
+        if (json.contextDepth) Globals.STRUCT_CONTEXT_DEPTH = json.contextDepth
+    }
+}
+
+// ----------------------------------------------------------------
+// --- WORD MODEL ANALYZER ---
+// ----------------------------------------------------------------
+
+class WordAnalyzer {
+    Map<String, Integer> lengthStartStats = [:]   // "len:startType" -> count
+
+    // Unigram: effLen -> prevType -> content -> count
+    Map<String, Map<String, Map<String, Integer>>> startTokens = [:]
+    Map<String, Map<String, Map<String, Integer>>> innerTokens = [:]
+    Map<String, Map<String, Map<String, Integer>>> lastTokens = [:]
+
+    // Bigram: effLen -> prevContent -> content -> count
+    Map<String, Map<String, Map<String, Integer>>> bigramStart = [:]
+    Map<String, Map<String, Map<String, Integer>>> bigramInner = [:]
+    Map<String, Map<String, Map<String, Integer>>> bigramLast = [:]
+
+    // Trigram: effLen -> "prev2:prev1" -> content -> count
+    Map<String, Map<String, Map<String, Integer>>> trigramInner = [:]
+    Map<String, Map<String, Map<String, Integer>>> trigramLast = [:]
+
+    Set<String> vocabulary = new HashSet<>()
+
+    void analyze(List<Token> tokens, boolean trackVocab) {
+        tokens.findAll { it.type == 'WORD' && it.wordLength > 0 }.each { tok ->
+            def clean = tok.text.findAll { Character.isLetter(it as char) }.join('').toLowerCase()
+            def cv = Utils.tokenizeCV(tok.text)
+            if (!cv) return
+
+            if (trackVocab) vocabulary << clean
+
+            def len = cv.size()
+            def effLen = Math.min(len, Globals.MAX_EFF_LEN).toString()
+            def startType = cv[0][0]
+
+            lengthStartStats.merge("${len}:${startType}", 1, { a, b -> a + b })
+
+            cv.eachWithIndex { t, i ->
+                def content = t[1]
+                def type = t[0]
+
+                if (i == 0) {
+                    ensure(startTokens, effLen, startType).merge(content, 1, { a, b -> a + b })
+                } else {
+                    def prev = cv[i-1]
+                    def prevContent = prev[1]
+                    def prevType = prev[0]
+                    def isLast = (i == len - 1)
+
+                    // Unigram
+                    ensure(isLast ? lastTokens : innerTokens, effLen, prevType).merge(content, 1, { a, b -> a + b })
+
+                    // Bigram
+                    def bgMap = isLast ? bigramLast : (i == 1 ? bigramStart : bigramInner)
+                    ensure(bgMap, effLen, prevContent).merge(content, 1, { a, b -> a + b })
+
+                    // Trigram
+                    if (i >= 2) {
+                        def prev2 = cv[i-2][1]
+                        def tgKey = "${prev2}:${prevContent}"
+                        ensure(isLast ? trigramLast : trigramInner, effLen, tgKey).merge(content, 1, { a, b -> a + b })
+                    }
+                }
+            }
+        }
+    }
+
+    private Map<String, Integer> ensure(Map m, String k1, String k2) {
+        m.computeIfAbsent(k1, {[:]}).computeIfAbsent(k2, {[:]})
+    }
+
+    Map toJson(boolean includeVocab) {
+        return [
+                vocabulary: includeVocab ? vocabulary : null,
                 lengthStartStats: lengthStartStats,
                 startTokens: startTokens,
                 innerTokens: innerTokens,
@@ -660,21 +846,6 @@ class Analyzer {
                 trigramInner: trigramInner,
                 trigramLast: trigramLast
         ]
-        Files.write(Paths.get(cfg.wordStatsFile), JsonOutput.toJson(wordData).getBytes("UTF-8"))
-        println "💾 Word Stats -> ${cfg.wordStatsFile}"
-
-        if (cfg.sentenceStatsFile) {
-            def rhythmData = [
-                    markovChain: markovAnalyzer.markovChain,
-                    lengthStats: markovAnalyzer.lengthStats,
-                    segmentStarts: markovAnalyzer.segmentStarts,
-                    openPunctStats: markovAnalyzer.openPunctStats,
-                    closePunctStats: markovAnalyzer.closePunctStats,
-                    transitions: transitions
-            ]
-            Files.write(Paths.get(cfg.sentenceStatsFile), JsonOutput.toJson(rhythmData).getBytes("UTF-8"))
-            println "💾 Sentence Stats -> ${cfg.sentenceStatsFile}"
-        }
     }
 }
 
@@ -683,314 +854,685 @@ class Analyzer {
 // ----------------------------------------------------------------
 
 class Generator {
-    WeightedSelector mainLengthSelector
-    Map<String, WeightedSelector> lengthToStartTypeSel = [:]
+    // Word model
+    WeightedSelector lengthSelector
+    Map<String, WeightedSelector> lengthStartSel = [:]
     Map<String, Map<String, WeightedSelector>> startSel = [:]
     Map<String, Map<String, WeightedSelector>> innerSel = [:]
     Map<String, Map<String, WeightedSelector>> lastSel = [:]
-    Map<String, Map<String, WeightedSelector>> bigramStartSel = [:]
-    Map<String, Map<String, WeightedSelector>> bigramInnerSel = [:]
-    Map<String, Map<String, WeightedSelector>> bigramLastSel = [:]
-    Map<String, Map<String, WeightedSelector>> trigramInnerSel = [:]
-    Map<String, Map<String, WeightedSelector>> trigramLastSel = [:]
+    Map<String, Map<String, WeightedSelector>> bgStartSel = [:]
+    Map<String, Map<String, WeightedSelector>> bgInnerSel = [:]
+    Map<String, Map<String, WeightedSelector>> bgLastSel = [:]
+    Map<String, Map<String, WeightedSelector>> tgInnerSel = [:]
+    Map<String, Map<String, WeightedSelector>> tgLastSel = [:]
+    Set<String> vocabulary = null
 
-    Set<String> loadedVocabulary = null
-    Map<String, WeightedSelector> transitionSel = [:]
+    // Structure model
+    Map<String, Map<String, WeightedSelector>> structChains = [:]
+    Map<String, List<Integer>> lengthDists = [:]
+    WeightedSelector termSelector
+    int quoteSentences = 0
+    int quoteSentencesWithAttr = 0
+    List<Integer> attrNameWordCounts = []
+    List<Integer> attrNameLengths = []
+    List<Integer> attrTitleWordCounts = []
+    List<Integer> attrTitleLengths = []
 
-    // Markov Data
-    Map<String, Map<String, WeightedSelector>> markovSelectors = [:]
-    Map<String, List<Integer>> lengthStats = [:]
-    Map<String, List<String>> segmentStarts = [:]
-    Map<String, WeightedSelector> openPunctSel = [:]
-    Map<String, WeightedSelector> closePunctSel = [:]
+    int ngramMode = 3
+    boolean markMode = false
 
-    int contextDepth = 3
+    // Track the lowest n-gram level used during word generation
+    int lastWordNgramLevel = 3  // 3=trigram, 2=bigram, 1=unigram
 
-    void loadWordModel(Config cfg) {
-        println "📂 Loading Word Model..."
-        def json = new JsonSlurper().parse(new File(cfg.wordStatsFile))
-        if (json.vocabulary) loadedVocabulary = new HashSet<>(json.vocabulary)
-        Map<String, Integer> rawLengthStats = json.lengthStartStats
-        if (cfg.pruneMinTokens > 0) {
-            rawLengthStats = rawLengthStats.findAll { k, v -> k.split(':')[0].toInteger() > cfg.pruneMinTokens }
-            if (rawLengthStats.isEmpty()) { println "❌ Error: Pruning too aggressive."; System.exit(1) }
-        }
-        mainLengthSelector = new WeightedSelector(rawLengthStats)
-        json.lengthStartStats.each { k, v ->
-            def parts = k.split(':'); lengthToStartTypeSel.computeIfAbsent(parts[0], {[:]}).put(parts[1], v)
-        }
-        lengthToStartTypeSel.each { k, v -> lengthToStartTypeSel[k] = new WeightedSelector(v) }
-        def build = { src, dest -> src.each { k1, inner -> dest[k1] = [:]; inner.each { k2, map -> dest[k1][k2] = new WeightedSelector(map) } } }
-        build(json.startTokens, startSel); build(json.innerTokens, innerSel); build(json.lastTokens, lastSel)
-        build(json.bigramStart, bigramStartSel); build(json.bigramInner, bigramInnerSel); build(json.bigramLast, bigramLastSel)
-        build(json.trigramInner, trigramInnerSel); build(json.trigramLast, trigramLastSel)
-    }
-
-    void loadRhythmModel(String path) {
-        println "📂 Loading Rhythm Model (Markov)..."
+    void loadWordModel(String path, int pruneMin, boolean loadVocab = true) {
         def json = new JsonSlurper().parse(new File(path))
 
-        json.markovChain.each { ctx, nextMap -> markovSelectors[ctx] = new WeightedSelector(nextMap) }
-        lengthStats = json.lengthStats
-        segmentStarts = json.segmentStarts
-        json.openPunctStats.each { k, v -> openPunctSel[k] = new WeightedSelector(v) }
-        json.closePunctStats.each { k, v -> closePunctSel[k] = new WeightedSelector(v) }
-        json.transitions.each { k, v -> transitionSel[k] = new WeightedSelector(v) }
-    }
+        if (loadVocab && json.vocabulary) vocabulary = new HashSet<>(json.vocabulary)
 
-    // --- STRUCTURAL GENERATION ---
-
-    Segment generateStructure(String type, int depth) {
-        Segment seg = new Segment(type: type)
-
-        if (openPunctSel[type]) seg.openPunct = openPunctSel[type].select(Globals.RND)
-        if (closePunctSel[type]) seg.closePunct = closePunctSel[type].select(Globals.RND)
-
-        def lens = lengthStats[type]
-        if (!lens) return seg
-        int targetLen = lens[Globals.RND.nextInt(lens.size())]
-
-        def starts = segmentStarts[type]
-        if (!starts) return seg
-        String startCtx = starts[Globals.RND.nextInt(starts.size())]
-        List<String> context = startCtx.split(/\|/).toList()
-
-        context.each { token -> applyToken(seg, token, depth) }
-        int currentLen = context.size()
-
-        while (true) {
-            String key = "${type}|" + context.takeRight(contextDepth).join("|")
-            def sel = markovSelectors[key]
-            if (!sel) break
-
-            String nextToken = sel.select(Globals.RND)
-
-            if (nextToken.startsWith("PAUSE") && context.size() > 0 && context.last().startsWith("PAUSE")) {
-                break
-            }
-
-            if (currentLen >= targetLen * 1.5) {
-                if (sel.keys.contains("END")) nextToken = "END"
-                else if (nextToken.startsWith("PAUSE") || nextToken.startsWith("SEGMENT")) break
-            }
-            if (nextToken == "END") break
-
-            applyToken(seg, nextToken, depth)
-
-            if (nextToken == "SEGMENT:ATTRIBUTION") {
-                break
-            }
-
-            context << nextToken
-            currentLen++
-            if (currentLen > 100) break
+        Map<String, Integer> rawLen = json.lengthStartStats
+        if (pruneMin > 0) {
+            rawLen = rawLen.findAll { k, v -> k.split(':')[0].toInteger() > pruneMin }
         }
-        return seg
+        lengthSelector = new WeightedSelector(rawLen)
+
+        // Build length->startType selectors
+        def tempMap = [:]
+        json.lengthStartStats.each { k, v ->
+            def parts = k.split(':')
+            tempMap.computeIfAbsent(parts[0], {[:]}).put(parts[1], v)
+        }
+        tempMap.each { k, v -> lengthStartSel[k] = new WeightedSelector(v) }
+
+        def buildSel = { src ->
+            def dest = [:]
+            src?.each { k1, inner ->
+                dest[k1] = [:]
+                inner.each { k2, map -> dest[k1][k2] = new WeightedSelector(map) }
+            }
+            return dest
+        }
+
+        startSel = buildSel(json.startTokens)
+        innerSel = buildSel(json.innerTokens)
+        lastSel = buildSel(json.lastTokens)
+        bgStartSel = buildSel(json.bigramStart)
+        bgInnerSel = buildSel(json.bigramInner)
+        bgLastSel = buildSel(json.bigramLast)
+        tgInnerSel = buildSel(json.trigramInner)
+        tgLastSel = buildSel(json.trigramLast)
     }
 
-    void applyToken(Segment seg, String token, int depth) {
-        def parts = token.split(':')
-        def t = parts[0]
-        def v = parts.size() > 1 ? parts[1] : ""
+    void loadStructModel(String path) {
+        def json = new JsonSlurper().parse(new File(path))
 
-        if (t == "WORD") {
-            int len = 0
-            if (v == "SHORT") len = Globals.RND.nextInt(3) + 1
-            else if (v == "MED") len = Globals.RND.nextInt(4) + 4
-            else len = Globals.RND.nextInt(5) + 8
-            seg.wordLengths << len
-        } else if (t == "PAUSE") {
-            seg.children << new Segment(type: 'PAUSE', terminator: v, childInsertPosition: seg.wordLengths.size())
-        } else if (t == "SEGMENT") {
-            if (depth < 4) {
-                Segment child = generateStructure(v, depth + 1)
-                child.childInsertPosition = seg.wordLengths.size()
-                seg.children << child
+        if (json.contextDepth) Globals.STRUCT_CONTEXT_DEPTH = json.contextDepth
+
+        json.chains?.each { type, contexts ->
+            structChains[type] = [:]
+            contexts.each { ctx, nexts ->
+                structChains[type][ctx] = new WeightedSelector(nexts)
             }
         }
+
+        lengthDists = json.lengthDists ?: [:]
+
+        if (json.terminators) {
+            termSelector = new WeightedSelector(json.terminators)
+        }
+
+        quoteSentences = json.quoteSentences ?: 0
+        quoteSentencesWithAttr = json.quoteSentencesWithAttr ?: 0
+        attrNameWordCounts = json.attrNameWordCounts ?: []
+        attrNameLengths = json.attrNameLengths ?: []
+        attrTitleWordCounts = json.attrTitleWordCounts ?: []
+        attrTitleLengths = json.attrTitleLengths ?: []
     }
 
-    String generateWord(int targetLen, int ngramMode) {
+    // --- Generation ---
+
+    String generateWord(int targetLen) {
+        lastWordNgramLevel = ngramMode  // Reset tracking
+
         def lenKey = targetLen.toString()
-        def typeSel = lengthToStartTypeSel[lenKey]
+        def typeSel = lengthStartSel[lenKey]
+
         if (!typeSel) {
-            def fused = mainLengthSelector.select(Globals.RND)
+            def fused = lengthSelector.select()
             if (!fused) return "blob"
-            lenKey = fused.split(':')[0]; targetLen = lenKey.toInteger(); typeSel = new WeightedSelector([(fused.split(':')[1]): 1])
+            def parts = fused.split(':')
+            lenKey = parts[0]
+            targetLen = lenKey.toInteger()
+            typeSel = lengthStartSel[lenKey] ?: new WeightedSelector([(parts[1]): 1])
         }
-        def startType = typeSel.select(Globals.RND)
+
+        def startType = typeSel.select()
         def effLen = Math.min(targetLen, Globals.MAX_EFF_LEN).toString()
-        def tokens = []; tokens << (startSel[effLen]?[startType]?.select(Globals.RND) ?: "err"); def prevType = startType
+
+        def tokens = []
+        def start = startSel[effLen]?."${startType}"?.select() ?: (startType == 'C' ? 'st' : 'a')
+        tokens << start
+
+        def prevType = startType
 
         for (int i = 1; i < targetLen; i++) {
-            def isLast = (i == targetLen - 1); def token = null
+            def isLast = (i == targetLen - 1)
+            String tok = null
+            int levelUsed = 0
+
+            // Try trigram
             if (ngramMode >= 3 && tokens.size() >= 2) {
-                def tgKey = "${tokens[-2]}:${tokens[-1]}"; token = (isLast ? trigramLastSel : trigramInnerSel)[effLen]?[tgKey]?.select(Globals.RND)
+                def key = "${tokens[-2]}:${tokens[-1]}"
+                tok = (isLast ? tgLastSel : tgInnerSel)[effLen]?."${key}"?.select()
+                if (tok) levelUsed = 3
             }
-            if (!token && ngramMode >= 2) {
-                def bgKey = tokens[-1]; token = (isLast ? bigramLastSel : (i == 1 ? bigramStartSel : bigramInnerSel))[effLen]?[bgKey]?.select(Globals.RND)
+
+            // Try bigram
+            if (!tok && ngramMode >= 2 && tokens.size() >= 1) {
+                def map = isLast ? bgLastSel : (i == 1 ? bgStartSel : bgInnerSel)
+                tok = map[effLen]?."${tokens[-1]}"?.select()
+                if (tok) levelUsed = 2
             }
-            if (!token) token = (isLast ? lastSel : innerSel)[effLen]?[prevType]?.select(Globals.RND)
-            if (!token) token = (prevType == 'C') ? 'a' : 'b'
-            tokens << token; prevType = (prevType == 'C' ? 'V' : 'C')
+
+            // Try unigram
+            if (!tok) {
+                tok = (isLast ? lastSel : innerSel)[effLen]?."${prevType}"?.select()
+                if (tok) levelUsed = 1
+            }
+
+            // Fallback
+            if (!tok) {
+                tok = (prevType == 'C') ? 'a' : 'n'
+                levelUsed = 0
+            }
+
+            // Track lowest level used
+            if (levelUsed < lastWordNgramLevel) {
+                lastWordNgramLevel = levelUsed
+            }
+
+            tokens << tok
+            prevType = Globals.VOWELS.contains(tok[-1]) ? 'V' : 'C'
         }
+
         return tokens.join('')
     }
 
-    String renderSegment(Segment seg, Config cfg, Map stats) {
-        def sb = new StringBuilder()
-        if (seg.openPunct) sb.append(seg.openPunct)
+    Segment generateStructure(String type, int depth = 0) {
+        def seg = new Segment(type: type)
+        def chain = structChains[type]
+        if (!chain) return seg
 
-        boolean isAttrib = (seg.type == 'ATTRIBUTION')
+        // Pick target length from distribution
+        def lens = lengthDists[type]
+        if (!lens || lens.isEmpty()) return seg
+        int targetLen = lens[Globals.RND.nextInt(lens.size())]
+        int maxLen = (int)(lens.max() * 1.2)  // Hard cap
 
-        def childIdx = 0
-        def sortedChildren = seg.children.sort { it.childInsertPosition }
+        def ctxDepth = Globals.STRUCT_CONTEXT_DEPTH
+        def context = ['START'] * ctxDepth
+        def generated = []
 
-        seg.wordLengths.eachWithIndex { len, i ->
-            while (childIdx < sortedChildren.size() && sortedChildren[childIdx].childInsertPosition == i) {
-                def child = sortedChildren[childIdx]
-                if (child.type == 'PAUSE') {
-                    if (sb.length() > 0 && sb.charAt(sb.length() - 1) == ' ') sb.setLength(sb.length() - 1)
-                    sb.append(child.terminator).append(' ')
-                } else {
-                    def out = renderSegment(child, cfg, stats)
-                    if (out) sb.append(out).append(' ')
+        while (generated.size() < maxLen) {
+            def ctxKey = context.takeRight(ctxDepth).join('|')
+            def sel = chain[ctxKey]
+            if (!sel) break
+
+            def next = sel.select()
+            if (!next) break
+
+            // Bias toward END as we approach/exceed target
+            if (generated.size() >= targetLen) {
+                if (sel.hasKey('END')) {
+                    // Increasing probability of END
+                    double endProb = Math.min(0.9, 0.3 + (generated.size() - targetLen) * 0.15)
+                    if (Globals.RND.nextDouble() < endProb) {
+                        next = 'END'
+                    }
                 }
+            }
+
+            if (next == 'END') break
+
+            // Apply entity
+            if (next.startsWith('WORD:')) {
+                def bin = next.substring(5)
+                seg.wordLengths << Utils.unbinWordLength(bin)
+            } else if (next.startsWith('PAUSE:')) {
+                def p = next.substring(6)
+                if (seg.wordLengths) {  // Only add pause after words
+                    seg.children << new Segment(type: 'PAUSE', terminator: p,
+                            insertPosition: seg.wordLengths.size())
+                }
+            } else if (next.startsWith('SEG:')) {
+                def childType = next.substring(4)
+
+                // Enforce quote nesting rules:
+                // - QUOTE can appear at top level (SENTENCE) or inside non-quote segments (PAREN, etc)
+                // - SQUOTE can ONLY appear inside QUOTE (for "quote 'within' quote")
+                // - No quotes inside SQUOTE
+                boolean allowChild = true
+                if (childType == 'QUOTE') {
+                    // QUOTE not allowed inside QUOTE or SQUOTE
+                    if (type == 'QUOTE' || type == 'SQUOTE') {
+                        allowChild = false
+                    }
+                } else if (childType == 'SQUOTE') {
+                    // SQUOTE ONLY allowed inside QUOTE - nowhere else
+                    if (type != 'QUOTE') {
+                        allowChild = false
+                    }
+                }
+
+                if (allowChild && depth < 3) {
+                    def child = generateStructure(childType, depth + 1)
+                    child.insertPosition = seg.wordLengths.size()
+                    seg.children << child
+
+                    // Track if sentence starts with quote
+                    if (depth == 0 && seg.wordLengths.isEmpty() &&
+                            seg.children.size() == 1 && childType == 'QUOTE') {
+                        seg.startsWithQuote = true
+                    }
+                }
+            }
+
+            generated << next
+            context << next
+        }
+
+        return seg
+    }
+
+    String renderSegment(Segment seg, boolean isRoot = true, String trailingPause = null) {
+        def sb = new StringBuilder()
+
+        // Opening punctuation for nested segments
+        if (!isRoot) {
+            switch (seg.type) {
+                case 'QUOTE': sb.append('"'); break
+                case 'SQUOTE': sb.append("'"); break
+                case 'PAREN': sb.append('('); break
+                case 'BRACKET': sb.append('['); break
+                case 'DASH_ASIDE': sb.append('\u2014 '); break
+            }
+        }
+
+        def sortedChildren = seg.children.findAll { it.type != 'PAUSE' }
+                .sort { it.insertPosition }
+        def pauses = seg.children.findAll { it.type == 'PAUSE' }
+                .collectEntries { [it.insertPosition, it.terminator] }
+        def consumedPauses = [] as Set  // Track pauses moved inside QUOTE children
+
+        int childIdx = 0
+        seg.wordLengths.eachWithIndex { len, i ->
+            // Insert children at this position
+            while (childIdx < sortedChildren.size() &&
+                    sortedChildren[childIdx].insertPosition == i) {
+                def child = sortedChildren[childIdx]
+
+                // For QUOTE children, check if there's a pause at this position
+                // If so, pass it to be rendered inside the quote (American style)
+                String pauseForQuote = null
+                if (child.type == 'QUOTE' && pauses.containsKey(i)) {
+                    pauseForQuote = pauses[i]
+                    consumedPauses << i
+                }
+
+                sb.append(renderSegment(child, false, pauseForQuote))
+                sb.append(' ')
                 childIdx++
             }
 
-            int currentMode = cfg.ngramMode
-            String w = generateWord(len, currentMode)
-            boolean forced = false
-            if (cfg.uniqueMode && loadedVocabulary) {
-                int retries = 0; int l1=20; int l2=40; int l3=60
-                while (loadedVocabulary.contains(w)) {
-                    stats.filteredCount++
+            // Generate and add word
+            def word = generateWord(len)
+            def wordNgramLevel = lastWordNgramLevel
+
+            // Handle uniqueness filtering if enabled
+            boolean forcedAccept = false
+            if (vocabulary) {
+                int retries = 0
+                int mode = ngramMode
+                while (vocabulary.contains(word) && retries < 60) {
                     retries++
-                    if (retries>=l1 && retries<l2) currentMode=2
-                    else if (retries>=l2 && retries<l3) currentMode=1
-                    else if (retries>=l3) { stats.forcedCount++; forced=true; break }
-                    w = generateWord(len, currentMode)
+                    if (retries >= 40) mode = 1
+                    else if (retries >= 20) mode = 2
+                    def oldMode = ngramMode
+                    ngramMode = mode
+                    word = generateWord(len)
+                    // Track level of THIS generation (will be final if we exit loop)
+                    wordNgramLevel = lastWordNgramLevel
+                    ngramMode = oldMode
                 }
+                if (retries >= 60) forcedAccept = true
             }
 
-            if (forced) w = "[${w}]"
-
-            // SPECIAL: Title Case for Attribution Words
-            if (isAttrib) {
-                w = w[0].toUpperCase() + (w.length()>1 ? w.substring(1) : "")
+            // Apply marking if enabled - shows fallbacks from requested n-gram level
+            if (markMode) {
+                if (forcedAccept) {
+                    // Uniqueness abandoned after max retries
+                    word = "[${word}]"
+                } else if (wordNgramLevel < ngramMode) {
+                    // Had to fall back to lower n-gram level
+                    if (wordNgramLevel <= 1) {
+                        // Fell back to unigram
+                        word = "{${word}}"
+                    } else if (wordNgramLevel == 2) {
+                        // Fell back to bigram (only visible in trigram mode)
+                        word = "<${word}>"
+                    }
+                }
+                // If wordNgramLevel == ngramMode, no marking (achieved requested level)
             }
 
-            if (isAttrib && i == 0) {
-                // No space before first word in attribution
+            sb.append(word)
+
+            // Add pause if present (and not already consumed by a QUOTE child)
+            if (pauses.containsKey(i + 1) && !consumedPauses.contains(i + 1)) {
+                sb.append(pauses[i + 1])
             }
 
-            sb.append(w).append(' ')
+            sb.append(' ')
         }
 
+        // Remaining children at end
         while (childIdx < sortedChildren.size()) {
-            def child = sortedChildren[childIdx]
-            if (child.type != 'PAUSE') {
-                def out = renderSegment(child, cfg, stats)
-                if (out) sb.append(out).append(' ')
-            }
+            sb.append(renderSegment(sortedChildren[childIdx], false))
+            sb.append(' ')
             childIdx++
         }
 
-        if (sb.length() > 0 && sb.charAt(sb.length() - 1) == ' ') sb.setLength(sb.length() - 1)
+        // Trim trailing space
+        while (sb.length() > 0 && sb.charAt(sb.length() - 1) == (' ' as char)) {
+            sb.deleteCharAt(sb.length() - 1)
+        }
 
-        if (seg.terminator && seg.type != 'SENTENCE' && seg.type != 'ATTRIBUTION') sb.append(seg.terminator)
-        if (seg.closePunct) sb.append(seg.closePunct)
+        // Closing punctuation and terminator for nested segments
+        if (!isRoot) {
+            switch (seg.type) {
+                case 'QUOTE':
+                    // Double quotes: punctuation INSIDE (American style)
+                    if (seg.terminator) sb.append(seg.terminator)
+                    // Also include any trailing pause from parent (comma after quote)
+                    if (trailingPause) sb.append(trailingPause)
+                    sb.append('"')
+                    break
+                case 'SQUOTE':
+                    // Single quotes: punctuation OUTSIDE
+                    sb.append("'")
+                    if (seg.terminator) sb.append(seg.terminator)
+                    break
+                case 'PAREN':
+                    if (seg.terminator) sb.append(seg.terminator)
+                    sb.append(')')
+                    break
+                case 'BRACKET':
+                    if (seg.terminator) sb.append(seg.terminator)
+                    sb.append(']')
+                    break
+                case 'DASH_ASIDE':
+                    if (seg.terminator) sb.append(seg.terminator)
+                    sb.append(' \u2014')
+                    break
+                default:
+                    if (seg.terminator) sb.append(seg.terminator)
+            }
+        }
+
         return sb.toString()
     }
 
-    void execute(Config cfg) {
-        if (cfg.uniqueMode && !loadedVocabulary) { println "❌ Error: Unique Mode requires vocabulary."; System.exit(1) }
-        if (cfg.uniqueMode) println "✨ Unique Filter: ${loadedVocabulary.size()} words loaded."
+    Attribution generateAttribution() {
+        def attr = new Attribution()
 
-        PrintStream outStream = System.out
-        if (cfg.f_File) { outStream = new PrintStream(new File(cfg.f_File)); println "✍️  Writing to file: ${cfg.f_File}" }
-        else { println "\n✍️  OUTPUT:"; println "=" * 60 }
+        // Pick number of name words from distribution, then pick that many lengths
+        if (attrNameWordCounts && attrNameLengths) {
+            int nameWordCount = attrNameWordCounts[Globals.RND.nextInt(attrNameWordCounts.size())]
+            nameWordCount.times {
+                attr.nameLengths << attrNameLengths[Globals.RND.nextInt(attrNameLengths.size())]
+            }
+        } else {
+            // Default: 1-2 name words of length 2-4
+            (Globals.RND.nextInt(2) + 1).times { attr.nameLengths << (Globals.RND.nextInt(3) + 2) }
+        }
 
-        int generatedCount = 0
-        def stats = [filteredCount: 0, forcedCount: 0]
+        // Maybe add title - probability based on how many attributions have titles
+        double titleProb = (quoteSentencesWithAttr > 0 && attrTitleWordCounts) ?
+                (attrTitleWordCounts.size() / (double)quoteSentencesWithAttr) : 0.3
 
-        while (generatedCount < cfg.count) {
-            if (cfg.sentenceStatsFile) {
-                Segment root = generateStructure("SENTENCE", 0)
-
-                boolean hasAttribution = root.children.any { it.type == 'ATTRIBUTION' }
-                if (!hasAttribution) {
-                    root.terminator = transitionSel["TERM"]?.select(Globals.RND) ?: "."
-                    if (root.terminator == '\u00B6') root.terminator = "."
-                } else {
-                    root.terminator = "" // Attribution IS the terminator
-                }
-
-                String output = renderSegment(root, cfg, stats)
-                if (output) {
-                    // Smart Capitalization
-                    output = Utils.smartCaps(output)
-
-                    if (root.terminator) output += root.terminator
-                }
-                outStream.println(output)
-                generatedCount++
-            } else {
-                def fused = mainLengthSelector.select(Globals.RND)
-                if (!fused) break
-                def targetLen = fused.split(':')[0].toInteger()
-                int currentMode = cfg.ngramMode
-                String w = generateWord(targetLen, currentMode)
-                boolean accepted = true
-                if (cfg.uniqueMode) {
-                    int retries = 0
-                    while (loadedVocabulary.contains(w)) {
-                        stats.filteredCount++; retries++
-                        if (retries>=20 && retries<40) currentMode=2
-                        else if (retries>=40 && retries<60) currentMode=1
-                        else if (retries>=60) { accepted=false; break }
-                        w = generateWord(targetLen, currentMode)
-                    }
-                }
-                if (accepted) { outStream.println(w); generatedCount++ }
+        if (Globals.RND.nextDouble() < titleProb && attrTitleWordCounts && attrTitleLengths) {
+            attr.hasTitle = true
+            int titleWordCount = attrTitleWordCounts[Globals.RND.nextInt(attrTitleWordCounts.size())]
+            titleWordCount.times {
+                attr.titleLengths << attrTitleLengths[Globals.RND.nextInt(attrTitleLengths.size())]
             }
         }
-        if (cfg.f_File) outStream.close()
-        println "=" * 60
-        if (cfg.uniqueMode) {
-            println "🔒 Filtered ${stats.filteredCount} duplicates."
-            if (stats.forcedCount > 0) println "⚠️  Forced to accept ${stats.forcedCount} real words."
+
+        return attr
+    }
+
+    String renderAttribution(Attribution attr) {
+        def sb = new StringBuilder('\u2014')  // Em-dash attached to first word
+
+        attr.nameLengths.eachWithIndex { len, i ->
+            def word = generateWord(len)
+            word = Utils.titleCase(word)
+            if (i > 0) sb.append(' ')
+            sb.append(word)
         }
-        println "✅ Done."
+
+        if (attr.hasTitle && attr.titleLengths) {
+            sb.append(', ')
+            attr.titleLengths.eachWithIndex { len, i ->
+                def word = generateWord(len)
+                if (i == 0) word = Utils.titleCase(word)
+                if (i > 0) sb.append(' ')
+                sb.append(word)
+            }
+        }
+
+        return sb.toString()
+    }
+
+    String generate() {
+        def seg = generateStructure('SENTENCE')
+        def text = renderSegment(seg)
+
+        // Smart capitalize
+        text = Utils.smartCaps(text)
+
+        // Handle attribution - only valid if:
+        // 1. Sentence starts with quote
+        // 2. Sentence has NO words outside the quote (the quote IS the sentence)
+        // 3. There's only one top-level child (the quote itself)
+        boolean canHaveAttribution = seg.startsWithQuote &&
+                seg.wordLengths.isEmpty() &&
+                seg.children.size() == 1 &&
+                seg.children[0].type == 'QUOTE'
+
+        if (canHaveAttribution && quoteSentencesWithAttr > 0) {
+            double attrProb = quoteSentencesWithAttr / (double)quoteSentences
+            if (Globals.RND.nextDouble() < attrProb) {
+                def attr = generateAttribution()
+                text = text + ' ' + renderAttribution(attr)
+                return text  // Attribution is terminator
+            }
+        }
+
+        // Add terminator
+        def term = termSelector?.select() ?: '.'
+        text = text + term
+
+        return text
     }
 }
 
 // ----------------------------------------------------------------
-// --- MAIN ---
+// --- CONFIG & MAIN ---
 // ----------------------------------------------------------------
 
-def cfg = parseArgs(args)
+@Canonical
+class Config {
+    boolean analyze = false
+    boolean generate = false
+    String wordFile = null
+    String structFile = null
+    String inputFile = null
+    String outputFile = null
+    boolean uniqueMode = false
+    boolean markMode = false    // -m: Mark n-gram fallbacks
+    int pruneMin = 0
+    int ngramMode = 3
+    int count = 20
+    int contextDepth = 3
+}
 
-if (!cfg.valid) {
-    println "❌ Error: ${cfg.error}"
+def parseArgs(String[] args) {
+    def cfg = new Config()
+    int i = 0
+    while (i < args.length) {
+        switch (args[i]) {
+            case '-a': cfg.analyze = true; break
+            case '-g': cfg.generate = true; break
+            case '-w': cfg.wordFile = args[++i]; break
+            case '-s': cfg.structFile = args[++i]; break
+            case '-f': cfg.inputFile = args[++i]; break
+            case '-o': cfg.outputFile = args[++i]; break
+            case '-u': cfg.uniqueMode = true; break
+            case '-m': cfg.markMode = true; break
+            case '-p': cfg.pruneMin = args[++i].toInteger(); break
+            case '-c': cfg.count = args[++i].toInteger(); break
+            case '-d': cfg.contextDepth = args[++i].toInteger(); break
+            case '-1': cfg.ngramMode = 1; break
+            case '-2': cfg.ngramMode = 2; break
+            case '-3': cfg.ngramMode = 3; break
+        }
+        i++
+    }
+    return cfg
+}
+
+def showUsage() {
     println """
-PSEUDO FACTORY (Structural Markov Edition) - USAGE:
-  1. ANALYZE: groovy script.groovy -a -f <source.txt> -w <words.json> [-s <sent.json>] [-u]
-  2. GENERATE: groovy script.groovy -g -w <words.json> [-s <sent.json>] [-c <n>] [-u] [-p <n>]
+PSEUDO TEXT GENERATOR - Fixed-Depth Markov Edition
+
+ANALYZE:
+  groovy script.groovy -a -f <input.txt> -w <words.json> [-s <struct.json>] [-u] [-d <depth>]
+  
+  -f  Input text file
+  -w  Output word statistics JSON
+  -s  Output structure statistics JSON (optional, enables sentence generation)
+  -u  Track vocabulary for unique word generation
+  -d  Markov context depth for structure (default: 3)
+
+GENERATE:
+  groovy script.groovy -g -w <words.json> [-s <struct.json>] [-o <output.txt>] [-c <count>] [-u] [-m] [-p <min>]
+  
+  -w  Input word statistics JSON
+  -s  Input structure statistics JSON (optional, if omitted generates words only)
+  -o  Output file (default: stdout)
+  -c  Number of items to generate (default: 20)
+  -u  Unique mode: avoid generating real words from vocabulary
+  -m  Mark mode: show n-gram fallback markers
+      <word> = backed off from trigram to bigram
+      {word} = backed off from bigram to unigram  
+      [word] = all n-grams failed, accepted existing word
+  -p  Prune: minimum word length to generate
+  -1/-2/-3  N-gram mode for word generation (default: 3)
 """
+}
+
+// --- MAIN ---
+
+def cfg = parseArgs(args)
+Globals.STRUCT_CONTEXT_DEPTH = cfg.contextDepth
+
+if (cfg.analyze && cfg.generate) {
+    println "Error: Choose either -a (analyze) or -g (generate), not both."
+    showUsage()
     System.exit(1)
 }
-println cfg.toString()
+
+if (!cfg.analyze && !cfg.generate) {
+    showUsage()
+    System.exit(0)
+}
 
 if (cfg.analyze) {
-    def analyzer = new Analyzer()
-    analyzer.process(cfg)
-    analyzer.save(cfg)
+    if (!cfg.inputFile || !cfg.wordFile) {
+        println "Error: Analysis requires -f <input> and -w <output>"
+        System.exit(1)
+    }
+
+    println "=== ANALYSIS ==="
+    println "Input: ${cfg.inputFile}"
+    println "Word stats: ${cfg.wordFile}"
+    if (cfg.structFile) println "Structure stats: ${cfg.structFile}"
+    println "Context depth: ${cfg.contextDepth}"
+    println ""
+
+    def text = new File(cfg.inputFile).getText('UTF-8')
+    def preprocessor = new Preprocessor()
+    def processed = preprocessor.process(text)
+
+    def tokenizer = new Tokenizer()
+    def tokens = tokenizer.tokenize(processed)
+
+    println "Tokens: ${tokens.size()}"
+    println "Words: ${tokens.count { it.type == 'WORD' }}"
+
+    // Word analysis
+    def wordAnalyzer = new WordAnalyzer()
+    wordAnalyzer.analyze(tokens, cfg.uniqueMode)
+
+    def wordJson = JsonOutput.prettyPrint(JsonOutput.toJson(wordAnalyzer.toJson(cfg.uniqueMode)))
+    Files.write(Paths.get(cfg.wordFile), wordJson.getBytes('UTF-8'))
+    println "Word stats saved: ${cfg.wordFile}"
+
+    if (cfg.uniqueMode) {
+        println "Vocabulary: ${wordAnalyzer.vocabulary.size()} unique words"
+    }
+
+    // Structure analysis
+    if (cfg.structFile) {
+        def parser = new StructureParser()
+        def segments = parser.parse(tokens)
+
+        println "Sentences: ${segments.size()}"
+
+        // Count quote-starting sentences and attributions
+        int quoteStarts = segments.count { it.startsWithQuote }
+        int withAttr = segments.count { it.attribution != null }
+        println "Quote-starting sentences: ${quoteStarts}"
+        println "Sentences with attribution: ${withAttr}"
+
+        def markov = new MarkovAnalyzer()
+        markov.analyze(segments)
+
+        def structJson = JsonOutput.prettyPrint(JsonOutput.toJson(markov.toJson()))
+        Files.write(Paths.get(cfg.structFile), structJson.getBytes('UTF-8'))
+        println "Structure stats saved: ${cfg.structFile}"
+
+        if (markov.quoteSentences > 0) {
+            println "Quote sentences (from analyzer): ${markov.quoteSentences} (${markov.quoteSentencesWithAttr} with attribution)"
+        }
+    }
+
+    println "\nDone."
 }
+
 if (cfg.generate) {
-    def generator = new Generator()
-    generator.loadWordModel(cfg)
-    if (cfg.sentenceStatsFile) generator.loadRhythmModel(cfg.sentenceStatsFile)
-    generator.execute(cfg)
+    if (!cfg.wordFile) {
+        println "Error: Generation requires -w <word stats>"
+        System.exit(1)
+    }
+
+    println "=== GENERATION ==="
+    println "Word stats: ${cfg.wordFile}"
+    if (cfg.structFile) println "Structure stats: ${cfg.structFile}"
+    println "Count: ${cfg.count}"
+    println "N-gram mode: ${cfg.ngramMode}"
+    if (cfg.uniqueMode) println "Unique mode: ON"
+    if (cfg.markMode) println "Mark mode: ON"
+    println ""
+
+    def gen = new Generator()
+    gen.ngramMode = cfg.ngramMode
+    gen.markMode = cfg.markMode
+    gen.loadWordModel(cfg.wordFile, cfg.pruneMin, cfg.uniqueMode)
+
+    if (cfg.structFile) {
+        gen.loadStructModel(cfg.structFile)
+        println "Attribution stats: ${gen.quoteSentences} quote sentences, ${gen.quoteSentencesWithAttr} with attribution"
+        if (gen.quoteSentences > 0) {
+            println "Attribution probability: ${String.format('%.1f', 100.0 * gen.quoteSentencesWithAttr / gen.quoteSentences)}%"
+        }
+        println ""
+    }
+
+    if (cfg.uniqueMode && !gen.vocabulary) {
+        println "Warning: Unique mode requires vocabulary in word stats (use -u during analysis)"
+    }
+
+    def output = cfg.outputFile ? new PrintStream(new File(cfg.outputFile)) : System.out
+
+    if (!cfg.outputFile) println "--- OUTPUT ---"
+
+    cfg.count.times {
+        if (cfg.structFile) {
+            output.println(gen.generate())
+        } else {
+            def fused = gen.lengthSelector.select()
+            if (fused) {
+                def len = fused.split(':')[0].toInteger()
+                output.println(gen.generateWord(len))
+            }
+        }
+    }
+
+    if (cfg.outputFile) {
+        output.close()
+        println "Output saved: ${cfg.outputFile}"
+    }
+
+    println "\nDone."
 }

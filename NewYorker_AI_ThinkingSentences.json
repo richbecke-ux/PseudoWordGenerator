@@ -1,0 +1,2216 @@
+{
+    "chains": {
+        "SENTENCE": {
+            "START|START|START": {
+                "WORD:MED": 74,
+                "WORD:SHORT": 238,
+                "SEG:QUOTE": 31,
+                "SEG:PAREN": 9,
+                "WORD:LONG": 24
+            },
+            "START|START|WORD:MED": {
+                "WORD:MED": 23,
+                "PAUSE:,": 11,
+                "WORD:SHORT": 26,
+                "WORD:LONG": 5,
+                "SEG:DASH_ASIDE": 1,
+                "END": 5,
+                "SEG:QUOTE": 3
+            },
+            "START|WORD:MED|WORD:MED": {
+                "PAUSE:,": 5,
+                "WORD:MED": 7,
+                "WORD:SHORT": 8,
+                "END": 1,
+                "WORD:LONG": 2
+            },
+            "WORD:MED|WORD:MED|PAUSE:,": {
+                "WORD:SHORT": 28,
+                "WORD:MED": 4,
+                "WORD:LONG": 4,
+                "END": 1
+            },
+            "WORD:MED|PAUSE:,|WORD:SHORT": {
+                "END": 2,
+                "WORD:SHORT": 37,
+                "PAUSE:,": 1,
+                "WORD:MED": 29,
+                "WORD:LONG": 11,
+                "SEG:QUOTE": 1
+            },
+            "START|START|WORD:SHORT": {
+                "END": 58,
+                "WORD:SHORT": 99,
+                "WORD:MED": 49,
+                "WORD:LONG": 20,
+                "PAUSE:,": 10,
+                "SEG:QUOTE": 2
+            },
+            "START|WORD:SHORT|WORD:SHORT": {
+                "WORD:LONG": 10,
+                "WORD:SHORT": 55,
+                "WORD:MED": 27,
+                "PAUSE:,": 3,
+                "END": 4
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:LONG": {
+                "WORD:LONG": 8,
+                "WORD:SHORT": 61,
+                "PAUSE:,": 7,
+                "WORD:MED": 29,
+                "END": 7,
+                "SEG:DASH_ASIDE": 2,
+                "PAUSE::": 2
+            },
+            "WORD:SHORT|WORD:LONG|WORD:LONG": {
+                "WORD:MED": 6,
+                "WORD:SHORT": 18,
+                "SEG:QUOTE": 1,
+                "PAUSE:,": 2,
+                "END": 1
+            },
+            "WORD:LONG|WORD:LONG|WORD:MED": {
+                "WORD:MED": 1,
+                "SEG:QUOTE": 1,
+                "WORD:LONG": 2,
+                "WORD:SHORT": 3,
+                "PAUSE:,": 1,
+                "END": 1,
+                "SEG:DASH_ASIDE": 2
+            },
+            "WORD:LONG|WORD:MED|WORD:MED": {
+                "PAUSE:,": 3,
+                "WORD:LONG": 4,
+                "END": 3,
+                "WORD:SHORT": 9,
+                "WORD:MED": 3
+            },
+            "PAUSE:,|WORD:SHORT|WORD:SHORT": {
+                "WORD:LONG": 7,
+                "END": 9,
+                "WORD:MED": 27,
+                "WORD:SHORT": 34,
+                "SEG:QUOTE": 1,
+                "PAUSE:,": 2
+            },
+            "WORD:SHORT|WORD:LONG|WORD:SHORT": {
+                "WORD:SHORT": 52,
+                "WORD:MED": 38,
+                "WORD:LONG": 17,
+                "END": 8,
+                "PAUSE::": 1,
+                "SEG:QUOTE": 1,
+                "PAUSE:,": 1,
+                "PAUSE:;": 1
+            },
+            "WORD:LONG|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 35,
+                "WORD:MED": 35,
+                "END": 6,
+                "WORD:LONG": 11,
+                "PAUSE:,": 2
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT": {
+                "END": 42,
+                "WORD:SHORT": 272,
+                "WORD:MED": 161,
+                "SEG:QUOTE": 7,
+                "WORD:LONG": 46,
+                "PAUSE:;": 4,
+                "SEG:DASH_ASIDE": 3,
+                "PAUSE:,": 25,
+                "PAUSE::": 2
+            },
+            "START|START|SEG:QUOTE": {
+                "WORD:SHORT": 20,
+                "WORD:MED": 9,
+                "WORD:LONG": 1,
+                "END": 1
+            },
+            "START|SEG:QUOTE|WORD:SHORT": {
+                "WORD:SHORT": 13,
+                "WORD:MED": 6,
+                "PAUSE:,": 1
+            },
+            "SEG:QUOTE|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 14,
+                "WORD:MED": 8,
+                "SEG:QUOTE": 1,
+                "END": 5,
+                "WORD:LONG": 2
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:MED": {
+                "PAUSE:,": 27,
+                "WORD:MED": 72,
+                "PAUSE::": 1,
+                "WORD:SHORT": 189,
+                "SEG:QUOTE": 4,
+                "END": 30,
+                "WORD:LONG": 25,
+                "SEG:DASH_ASIDE": 5,
+                "SEG:PAREN": 1,
+                "PAUSE:;": 2
+            },
+            "WORD:SHORT|WORD:MED|PAUSE:,": {
+                "WORD:SHORT": 32,
+                "WORD:MED": 14,
+                "WORD:LONG": 7
+            },
+            "PAUSE:,|WORD:SHORT|PAUSE:,": {
+                "WORD:LONG": 1,
+                "WORD:SHORT": 2
+            },
+            "WORD:SHORT|PAUSE:,|WORD:LONG": {
+                "PAUSE:,": 3,
+                "WORD:MED": 3,
+                "WORD:LONG": 1
+            },
+            "PAUSE:,|WORD:LONG|PAUSE:,": {
+                "WORD:SHORT": 6,
+                "WORD:MED": 2,
+                "WORD:LONG": 2
+            },
+            "WORD:LONG|PAUSE:,|WORD:SHORT": {
+                "WORD:MED": 11,
+                "WORD:LONG": 12,
+                "WORD:SHORT": 12
+            },
+            "PAUSE:,|WORD:SHORT|WORD:MED": {
+                "WORD:SHORT": 28,
+                "PAUSE:,": 7,
+                "WORD:MED": 13,
+                "PAUSE::": 1,
+                "WORD:LONG": 5
+            },
+            "WORD:SHORT|WORD:MED|WORD:SHORT": {
+                "WORD:MED": 138,
+                "WORD:SHORT": 197,
+                "WORD:LONG": 38,
+                "PAUSE:,": 7,
+                "END": 17,
+                "SEG:QUOTE": 4,
+                "PAUSE::": 2,
+                "SEG:DASH_ASIDE": 2,
+                "PAUSE:;": 1
+            },
+            "WORD:MED|WORD:SHORT|WORD:MED": {
+                "WORD:MED": 49,
+                "WORD:SHORT": 106,
+                "PAUSE::": 1,
+                "END": 21,
+                "PAUSE:,": 13,
+                "PAUSE:;": 2,
+                "WORD:LONG": 12,
+                "SEG:QUOTE": 1,
+                "SEG:DASH_ASIDE": 2
+            },
+            "WORD:SHORT|WORD:MED|WORD:MED": {
+                "WORD:SHORT": 82,
+                "WORD:MED": 31,
+                "PAUSE:,": 22,
+                "END": 14,
+                "WORD:LONG": 12,
+                "PAUSE:;": 1,
+                "SEG:QUOTE": 2,
+                "PAUSE::": 1,
+                "SEG:DASH_ASIDE": 1
+            },
+            "WORD:MED|WORD:MED|WORD:SHORT": {
+                "END": 16,
+                "WORD:MED": 36,
+                "PAUSE:,": 3,
+                "WORD:SHORT": 61,
+                "WORD:LONG": 12
+            },
+            "START|WORD:SHORT|WORD:MED": {
+                "WORD:MED": 10,
+                "WORD:SHORT": 32,
+                "WORD:LONG": 4,
+                "END": 2,
+                "PAUSE:,": 1
+            },
+            "WORD:MED|WORD:SHORT|WORD:SHORT": {
+                "WORD:MED": 93,
+                "WORD:SHORT": 144,
+                "SEG:QUOTE": 5,
+                "END": 17,
+                "WORD:LONG": 39,
+                "PAUSE:,": 10,
+                "PAUSE:;": 1
+            },
+            "WORD:MED|WORD:SHORT|PAUSE:,": {
+                "WORD:SHORT": 14,
+                "WORD:MED": 1,
+                "WORD:LONG": 2
+            },
+            "WORD:SHORT|PAUSE:,|WORD:SHORT": {
+                "WORD:LONG": 10,
+                "WORD:SHORT": 31,
+                "WORD:MED": 14,
+                "PAUSE:,": 2,
+                "SEG:QUOTE": 2,
+                "END": 1
+            },
+            "PAUSE:,|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 11,
+                "WORD:LONG": 6,
+                "WORD:MED": 12,
+                "END": 3,
+                "PAUSE:,": 1
+            },
+            "WORD:SHORT|WORD:MED|PAUSE::": {
+                "WORD:SHORT": 2,
+                "WORD:MED": 1
+            },
+            "WORD:MED|PAUSE::|WORD:SHORT": {
+                "SEG:QUOTE": 1,
+                "WORD:LONG": 1
+            },
+            "PAUSE::|WORD:SHORT|SEG:QUOTE": {
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|SEG:QUOTE|WORD:SHORT": {
+                "WORD:MED": 7,
+                "WORD:SHORT": 9,
+                "END": 1,
+                "WORD:LONG": 3
+            },
+            "SEG:QUOTE|WORD:SHORT|WORD:MED": {
+                "PAUSE:,": 2,
+                "END": 4,
+                "WORD:SHORT": 4,
+                "WORD:MED": 6,
+                "WORD:LONG": 1
+            },
+            "WORD:MED|PAUSE:,|WORD:MED": {
+                "WORD:SHORT": 10,
+                "WORD:MED": 5,
+                "WORD:LONG": 3,
+                "PAUSE:,": 2,
+                "END": 2
+            },
+            "PAUSE:,|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 11,
+                "END": 2,
+                "WORD:MED": 9,
+                "PAUSE:,": 1
+            },
+            "WORD:SHORT|WORD:MED|SEG:QUOTE": {
+                "WORD:SHORT": 4,
+                "WORD:MED": 2
+            },
+            "WORD:MED|SEG:QUOTE|WORD:SHORT": {
+                "WORD:MED": 3,
+                "WORD:SHORT": 8,
+                "WORD:LONG": 2
+            },
+            "START|WORD:MED|PAUSE:,": {
+                "WORD:SHORT": 10,
+                "WORD:MED": 1
+            },
+            "WORD:MED|WORD:MED|WORD:MED": {
+                "WORD:SHORT": 24,
+                "PAUSE:,": 3,
+                "WORD:MED": 15,
+                "WORD:LONG": 13,
+                "END": 3,
+                "SEG:QUOTE": 2
+            },
+            "WORD:MED|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 21,
+                "WORD:LONG": 7,
+                "END": 5,
+                "PAUSE:,": 8,
+                "WORD:MED": 17,
+                "SEG:DASH_ASIDE": 2
+            },
+            "WORD:LONG|WORD:SHORT|WORD:MED": {
+                "PAUSE:,": 3,
+                "WORD:LONG": 5,
+                "WORD:MED": 16,
+                "WORD:SHORT": 35,
+                "END": 4,
+                "SEG:QUOTE": 1,
+                "PAUSE:;": 2
+            },
+            "WORD:LONG|WORD:MED|SEG:QUOTE": {
+                "WORD:SHORT": 3,
+                "WORD:MED": 1
+            },
+            "WORD:SHORT|WORD:SHORT|SEG:QUOTE": {
+                "WORD:SHORT": 12,
+                "WORD:MED": 1,
+                "END": 1
+            },
+            "WORD:SHORT|SEG:QUOTE|WORD:MED": {
+                "WORD:SHORT": 2,
+                "WORD:MED": 1,
+                "END": 2,
+                "SEG:QUOTE": 1
+            },
+            "SEG:QUOTE|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 3,
+                "PAUSE:,": 1,
+                "END": 3,
+                "WORD:MED": 1
+            },
+            "WORD:SHORT|WORD:MED|WORD:LONG": {
+                "WORD:SHORT": 24,
+                "END": 8,
+                "SEG:DASH_ASIDE": 2,
+                "WORD:LONG": 8,
+                "WORD:MED": 7,
+                "PAUSE:,": 2,
+                "PAUSE::": 1,
+                "PAUSE:;": 1
+            },
+            "WORD:MED|WORD:LONG|WORD:SHORT": {
+                "WORD:SHORT": 21,
+                "WORD:MED": 17,
+                "WORD:LONG": 4,
+                "END": 2,
+                "PAUSE:,": 1
+            },
+            "WORD:SHORT|PAUSE:,|WORD:MED": {
+                "WORD:SHORT": 8,
+                "PAUSE:,": 1
+            },
+            "START|WORD:MED|WORD:SHORT": {
+                "WORD:MED": 11,
+                "PAUSE:,": 4,
+                "WORD:SHORT": 7,
+                "WORD:LONG": 2,
+                "END": 2
+            },
+            "WORD:SHORT|WORD:MED|SEG:DASH_ASIDE": {
+                "END": 5,
+                "WORD:SHORT": 1,
+                "WORD:MED": 1
+            },
+            "WORD:MED|PAUSE::|WORD:MED": {
+                "WORD:LONG": 1,
+                "PAUSE:,": 1
+            },
+            "PAUSE::|WORD:MED|WORD:LONG": {
+                "WORD:SHORT": 1
+            },
+            "START|START|SEG:PAREN": {
+                "END": 7,
+                "WORD:SHORT": 2
+            },
+            "WORD:LONG|WORD:SHORT|WORD:LONG": {
+                "END": 3,
+                "SEG:DASH_ASIDE": 2,
+                "WORD:MED": 8,
+                "PAUSE:,": 5,
+                "WORD:LONG": 4,
+                "WORD:SHORT": 8
+            },
+            "WORD:SHORT|WORD:LONG|SEG:DASH_ASIDE": {
+                "END": 3,
+                "WORD:SHORT": 3
+            },
+            "WORD:SHORT|WORD:LONG|PAUSE:,": {
+                "WORD:MED": 6,
+                "WORD:SHORT": 14,
+                "WORD:LONG": 4
+            },
+            "WORD:LONG|PAUSE:,|WORD:MED": {
+                "WORD:SHORT": 5,
+                "WORD:MED": 4,
+                "PAUSE:,": 1,
+                "WORD:LONG": 2,
+                "SEG:DASH_ASIDE": 1
+            },
+            "START|START|WORD:LONG": {
+                "PAUSE:,": 5,
+                "WORD:SHORT": 8,
+                "WORD:MED": 7,
+                "SEG:DASH_ASIDE": 1,
+                "WORD:LONG": 2,
+                "SEG:QUOTE": 1
+            },
+            "START|WORD:LONG|PAUSE:,": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 4
+            },
+            "PAUSE:,|WORD:MED|WORD:MED": {
+                "END": 3,
+                "PAUSE:,": 3,
+                "WORD:SHORT": 1,
+                "WORD:MED": 2
+            },
+            "WORD:SHORT|WORD:SHORT|PAUSE:;": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 4
+            },
+            "WORD:SHORT|PAUSE:;|WORD:MED": {
+                "WORD:SHORT": 2
+            },
+            "PAUSE:;|WORD:MED|WORD:SHORT": {
+                "WORD:MED": 2,
+                "WORD:SHORT": 2
+            },
+            "WORD:LONG|WORD:LONG|WORD:SHORT": {
+                "WORD:SHORT": 8,
+                "WORD:LONG": 5,
+                "WORD:MED": 6,
+                "END": 2
+            },
+            "START|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 12,
+                "PAUSE:,": 3,
+                "END": 1,
+                "WORD:MED": 1,
+                "WORD:LONG": 3
+            },
+            "WORD:SHORT|WORD:SHORT|PAUSE:,": {
+                "WORD:SHORT": 35,
+                "WORD:MED": 5,
+                "WORD:LONG": 2
+            },
+            "WORD:SHORT|WORD:LONG|WORD:MED": {
+                "END": 8,
+                "WORD:SHORT": 36,
+                "WORD:MED": 13,
+                "PAUSE:;": 3,
+                "PAUSE:,": 5,
+                "SEG:QUOTE": 2,
+                "WORD:LONG": 3
+            },
+            "WORD:SHORT|WORD:SHORT|SEG:DASH_ASIDE": {
+                "END": 3
+            },
+            "WORD:LONG|WORD:MED|WORD:SHORT": {
+                "WORD:MED": 10,
+                "WORD:LONG": 8,
+                "END": 8,
+                "WORD:SHORT": 26,
+                "PAUSE:,": 1,
+                "SEG:QUOTE": 1
+            },
+            "START|WORD:SHORT|PAUSE:,": {
+                "WORD:SHORT": 7,
+                "WORD:LONG": 1,
+                "WORD:MED": 2
+            },
+            "WORD:MED|WORD:LONG|SEG:DASH_ASIDE": {
+                "END": 2,
+                "WORD:SHORT": 1
+            },
+            "START|WORD:MED|WORD:LONG": {
+                "WORD:MED": 2,
+                "WORD:SHORT": 1,
+                "PAUSE:,": 2
+            },
+            "WORD:MED|WORD:LONG|WORD:MED": {
+                "WORD:MED": 3,
+                "WORD:SHORT": 10,
+                "WORD:LONG": 3,
+                "END": 5,
+                "SEG:QUOTE": 1,
+                "PAUSE:,": 1
+            },
+            "WORD:MED|WORD:MED|WORD:LONG": {
+                "WORD:SHORT": 15,
+                "PAUSE::": 2,
+                "WORD:MED": 8,
+                "PAUSE:,": 3,
+                "END": 1,
+                "WORD:LONG": 1,
+                "SEG:DASH_ASIDE": 1
+            },
+            "WORD:MED|WORD:LONG|PAUSE::": {
+                "WORD:SHORT": 3
+            },
+            "WORD:LONG|PAUSE::|WORD:SHORT": {
+                "WORD:MED": 2,
+                "WORD:SHORT": 2
+            },
+            "PAUSE::|WORD:SHORT|WORD:MED": {
+                "WORD:LONG": 1,
+                "WORD:SHORT": 2
+            },
+            "WORD:MED|WORD:LONG|WORD:LONG": {
+                "WORD:MED": 4,
+                "PAUSE:,": 1,
+                "WORD:SHORT": 2,
+                "WORD:LONG": 1,
+                "SEG:DASH_ASIDE": 1,
+                "END": 1
+            },
+            "WORD:LONG|WORD:MED|WORD:LONG": {
+                "PAUSE:;": 1,
+                "WORD:SHORT": 4,
+                "WORD:MED": 1,
+                "WORD:LONG": 1,
+                "END": 1
+            },
+            "WORD:MED|WORD:LONG|PAUSE:;": {
+                "WORD:SHORT": 2
+            },
+            "WORD:LONG|PAUSE:;|WORD:SHORT": {
+                "WORD:SHORT": 1,
+                "WORD:MED": 1
+            },
+            "PAUSE:;|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 4,
+                "WORD:MED": 3
+            },
+            "WORD:SHORT|PAUSE:;|WORD:SHORT": {
+                "WORD:SHORT": 2,
+                "WORD:MED": 2,
+                "WORD:LONG": 1
+            },
+            "START|WORD:MED|SEG:DASH_ASIDE": {
+                "WORD:MED": 1
+            },
+            "WORD:MED|SEG:DASH_ASIDE|WORD:MED": {
+                "WORD:LONG": 1,
+                "WORD:SHORT": 1
+            },
+            "SEG:DASH_ASIDE|WORD:MED|WORD:LONG": {
+                "WORD:MED": 1
+            },
+            "PAUSE::|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 1,
+                "WORD:MED": 1
+            },
+            "START|WORD:LONG|WORD:SHORT": {
+                "WORD:SHORT": 4,
+                "WORD:LONG": 1,
+                "WORD:MED": 3
+            },
+            "PAUSE:,|WORD:SHORT|SEG:QUOTE": {
+                "WORD:SHORT": 2,
+                "WORD:MED": 1
+            },
+            "START|SEG:QUOTE|WORD:MED": {
+                "WORD:SHORT": 5,
+                "END": 1,
+                "WORD:MED": 1,
+                "PAUSE:,": 2
+            },
+            "PAUSE:,|WORD:MED|PAUSE:,": {
+                "WORD:SHORT": 4
+            },
+            "WORD:LONG|WORD:MED|PAUSE:;": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 2
+            },
+            "WORD:MED|PAUSE:;|WORD:MED": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 2
+            },
+            "PAUSE:;|WORD:MED|WORD:MED": {
+                "WORD:MED": 1
+            },
+            "WORD:MED|WORD:SHORT|SEG:QUOTE": {
+                "WORD:SHORT": 2,
+                "WORD:MED": 3
+            },
+            "WORD:LONG|WORD:MED|PAUSE:,": {
+                "WORD:SHORT": 5,
+                "WORD:MED": 3,
+                "WORD:LONG": 1
+            },
+            "WORD:MED|WORD:LONG|PAUSE:,": {
+                "WORD:MED": 3,
+                "WORD:SHORT": 6,
+                "WORD:LONG": 1
+            },
+            "PAUSE:;|WORD:SHORT|WORD:MED": {
+                "WORD:SHORT": 5
+            },
+            "WORD:SHORT|WORD:MED|PAUSE:;": {
+                "WORD:SHORT": 4,
+                "WORD:MED": 2
+            },
+            "WORD:MED|PAUSE:;|WORD:SHORT": {
+                "WORD:SHORT": 4,
+                "WORD:MED": 2,
+                "WORD:LONG": 1
+            },
+            "WORD:MED|PAUSE:,|WORD:LONG": {
+                "WORD:SHORT": 7,
+                "WORD:LONG": 2,
+                "PAUSE:,": 4
+            },
+            "PAUSE:,|WORD:LONG|WORD:SHORT": {
+                "WORD:LONG": 3,
+                "WORD:MED": 2,
+                "WORD:SHORT": 4
+            },
+            "WORD:LONG|PAUSE:,|WORD:LONG": {
+                "PAUSE:,": 3,
+                "WORD:MED": 1,
+                "WORD:SHORT": 2,
+                "END": 1
+            },
+            "PAUSE:,|WORD:MED|WORD:LONG": {
+                "PAUSE:,": 3,
+                "WORD:MED": 2
+            },
+            "WORD:LONG|WORD:SHORT|PAUSE::": {
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|PAUSE::|WORD:SHORT": {
+                "WORD:SHORT": 2,
+                "WORD:MED": 1,
+                "WORD:LONG": 1
+            },
+            "PAUSE::|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 3,
+                "WORD:MED": 1
+            },
+            "START|WORD:SHORT|SEG:QUOTE": {
+                "WORD:SHORT": 2
+            },
+            "START|WORD:MED|SEG:QUOTE": {
+                "WORD:MED": 2,
+                "WORD:SHORT": 1
+            },
+            "WORD:MED|SEG:QUOTE|WORD:MED": {
+                "WORD:LONG": 2,
+                "WORD:MED": 2,
+                "WORD:SHORT": 1
+            },
+            "SEG:QUOTE|WORD:MED|WORD:LONG": {
+                "WORD:MED": 2
+            },
+            "PAUSE:,|WORD:LONG|WORD:MED": {
+                "WORD:MED": 2,
+                "WORD:SHORT": 2
+            },
+            "WORD:LONG|WORD:SHORT|SEG:QUOTE": {
+                "WORD:MED": 1
+            },
+            "SEG:QUOTE|WORD:MED|WORD:MED": {
+                "WORD:SHORT": 2,
+                "PAUSE:,": 1,
+                "WORD:MED": 1
+            },
+            "START|SEG:QUOTE|WORD:LONG": {
+                "WORD:MED": 1
+            },
+            "SEG:QUOTE|WORD:LONG|WORD:MED": {
+                "PAUSE:,": 1
+            },
+            "WORD:LONG|SEG:DASH_ASIDE|WORD:SHORT": {
+                "WORD:MED": 2,
+                "SEG:QUOTE": 1,
+                "WORD:SHORT": 2
+            },
+            "SEG:DASH_ASIDE|WORD:SHORT|WORD:MED": {
+                "WORD:SHORT": 4
+            },
+            "WORD:SHORT|WORD:MED|SEG:PAREN": {
+                "END": 1
+            },
+            "WORD:MED|SEG:DASH_ASIDE|WORD:SHORT": {
+                "WORD:MED": 2
+            },
+            "SEG:DASH_ASIDE|WORD:SHORT|SEG:QUOTE": {
+                "WORD:SHORT": 1
+            },
+            "START|WORD:LONG|WORD:MED": {
+                "WORD:MED": 3,
+                "PAUSE:,": 1,
+                "WORD:SHORT": 3
+            },
+            "PAUSE:,|WORD:LONG|WORD:LONG": {
+                "WORD:LONG": 2,
+                "PAUSE:,": 1
+            },
+            "WORD:LONG|WORD:LONG|WORD:LONG": {
+                "PAUSE:,": 1,
+                "WORD:MED": 1,
+                "END": 1
+            },
+            "WORD:LONG|WORD:LONG|PAUSE:,": {
+                "WORD:SHORT": 5,
+                "WORD:MED": 1
+            },
+            "WORD:SHORT|WORD:LONG|PAUSE::": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 1
+            },
+            "WORD:LONG|PAUSE::|WORD:MED": {
+                "WORD:SHORT": 1
+            },
+            "PAUSE::|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 1
+            },
+            "WORD:MED|WORD:MED|PAUSE:;": {
+                "WORD:SHORT": 1
+            },
+            "START|WORD:LONG|SEG:DASH_ASIDE": {
+                "WORD:SHORT": 1
+            },
+            "SEG:DASH_ASIDE|WORD:SHORT|WORD:SHORT": {
+                "WORD:LONG": 1,
+                "WORD:SHORT": 1
+            },
+            "PAUSE:;|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 2
+            },
+            "WORD:SHORT|WORD:SHORT|PAUSE::": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|PAUSE::|WORD:MED": {
+                "WORD:MED": 1
+            },
+            "PAUSE::|WORD:MED|WORD:MED": {
+                "WORD:SHORT": 1
+            },
+            "SEG:QUOTE|WORD:SHORT|WORD:LONG": {
+                "WORD:MED": 2,
+                "WORD:SHORT": 3
+            },
+            "START|WORD:LONG|WORD:LONG": {
+                "WORD:SHORT": 1,
+                "PAUSE:,": 1
+            },
+            "SEG:DASH_ASIDE|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 1
+            },
+            "WORD:LONG|WORD:LONG|SEG:QUOTE": {
+                "WORD:SHORT": 1
+            },
+            "WORD:LONG|SEG:QUOTE|WORD:SHORT": {
+                "PAUSE:,": 1,
+                "WORD:MED": 1
+            },
+            "SEG:QUOTE|WORD:SHORT|PAUSE:,": {
+                "WORD:SHORT": 2
+            },
+            "WORD:LONG|WORD:SHORT|PAUSE:,": {
+                "WORD:LONG": 1,
+                "WORD:MED": 1
+            },
+            "SEG:QUOTE|WORD:MED|SEG:QUOTE": {
+                "WORD:SHORT": 1
+            },
+            "WORD:MED|WORD:MED|SEG:QUOTE": {
+                "WORD:SHORT": 4
+            },
+            "START|SEG:PAREN|WORD:SHORT": {
+                "WORD:SHORT": 1,
+                "WORD:MED": 1
+            },
+            "SEG:PAREN|WORD:SHORT|WORD:SHORT": {
+                "WORD:MED": 1
+            },
+            "SEG:PAREN|WORD:SHORT|WORD:MED": {
+                "WORD:SHORT": 1
+            },
+            "WORD:LONG|WORD:MED|SEG:DASH_ASIDE": {
+                "END": 1,
+                "WORD:SHORT": 1
+            },
+            "WORD:MED|WORD:SHORT|PAUSE::": {
+                "WORD:SHORT": 2
+            },
+            "SEG:QUOTE|WORD:MED|PAUSE:,": {
+                "WORD:SHORT": 2
+            },
+            "WORD:LONG|WORD:LONG|SEG:DASH_ASIDE": {
+                "END": 1
+            },
+            "WORD:MED|WORD:SHORT|SEG:DASH_ASIDE": {
+                "END": 1,
+                "WORD:MED": 1
+            },
+            "WORD:SHORT|SEG:DASH_ASIDE|WORD:MED": {
+                "WORD:MED": 1
+            },
+            "SEG:DASH_ASIDE|WORD:MED|WORD:MED": {
+                "WORD:SHORT": 1
+            },
+            "START|WORD:LONG|SEG:QUOTE": {
+                "WORD:SHORT": 1
+            },
+            "WORD:MED|WORD:MED|PAUSE::": {
+                "WORD:MED": 1
+            },
+            "PAUSE::|WORD:MED|PAUSE:,": {
+                "WORD:LONG": 1
+            },
+            "WORD:LONG|WORD:SHORT|PAUSE:;": {
+                "WORD:MED": 1
+            },
+            "WORD:MED|WORD:SHORT|PAUSE:;": {
+                "WORD:SHORT": 1
+            },
+            "PAUSE:,|WORD:MED|SEG:DASH_ASIDE": {
+                "END": 1
+            },
+            "WORD:MED|WORD:MED|SEG:DASH_ASIDE": {
+                "END": 1
+            }
+        },
+        "QUOTE": {
+            "START|START|START": {
+                "WORD:MED": 27,
+                "WORD:LONG": 11,
+                "WORD:SHORT": 53
+            },
+            "START|START|WORD:MED": {
+                "WORD:SHORT": 10,
+                "END": 4,
+                "WORD:MED": 4,
+                "PAUSE:,": 5,
+                "WORD:LONG": 4
+            },
+            "START|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 7,
+                "WORD:LONG": 1,
+                "WORD:MED": 2
+            },
+            "WORD:MED|WORD:SHORT|WORD:SHORT": {
+                "WORD:MED": 20,
+                "WORD:SHORT": 26,
+                "END": 1,
+                "PAUSE:,": 3,
+                "WORD:LONG": 9
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:MED": {
+                "WORD:MED": 15,
+                "WORD:SHORT": 40,
+                "WORD:LONG": 6,
+                "PAUSE:,": 7,
+                "END": 5
+            },
+            "WORD:SHORT|WORD:MED|WORD:MED": {
+                "WORD:MED": 5,
+                "PAUSE:,": 4,
+                "WORD:LONG": 3,
+                "WORD:SHORT": 16,
+                "END": 2
+            },
+            "WORD:MED|WORD:MED|WORD:MED": {
+                "END": 2,
+                "WORD:SHORT": 5,
+                "PAUSE:,": 1
+            },
+            "WORD:MED|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 10,
+                "WORD:MED": 4,
+                "WORD:LONG": 1,
+                "PAUSE:,": 1,
+                "END": 1
+            },
+            "WORD:SHORT|WORD:LONG|WORD:SHORT": {
+                "WORD:SHORT": 14,
+                "WORD:MED": 4,
+                "WORD:LONG": 2,
+                "END": 1,
+                "PAUSE:,": 2
+            },
+            "WORD:LONG|WORD:SHORT|WORD:SHORT": {
+                "WORD:LONG": 1,
+                "WORD:MED": 3,
+                "WORD:SHORT": 10,
+                "PAUSE:,": 2,
+                "END": 2
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:LONG": {
+                "END": 4,
+                "WORD:LONG": 3,
+                "PAUSE:,": 2,
+                "WORD:SHORT": 7,
+                "WORD:MED": 5
+            },
+            "START|START|WORD:LONG": {
+                "WORD:LONG": 2,
+                "WORD:MED": 3,
+                "END": 3,
+                "PAUSE:,": 2,
+                "WORD:SHORT": 1
+            },
+            "START|WORD:LONG|WORD:LONG": {
+                "END": 1,
+                "WORD:MED": 1
+            },
+            "START|START|WORD:SHORT": {
+                "WORD:SHORT": 33,
+                "END": 4,
+                "WORD:MED": 13,
+                "WORD:LONG": 1,
+                "SEG:SQUOTE": 1,
+                "PAUSE:,": 1
+            },
+            "START|WORD:SHORT|WORD:SHORT": {
+                "WORD:MED": 8,
+                "WORD:SHORT": 20,
+                "END": 4,
+                "WORD:LONG": 1
+            },
+            "WORD:SHORT|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 33,
+                "WORD:MED": 25,
+                "PAUSE:,": 4,
+                "WORD:LONG": 10,
+                "END": 2,
+                "PAUSE::": 1
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT": {
+                "WORD:MED": 40,
+                "WORD:LONG": 10,
+                "WORD:SHORT": 57,
+                "END": 6,
+                "PAUSE:,": 3,
+                "SEG:SQUOTE": 2
+            },
+            "WORD:SHORT|WORD:MED|WORD:LONG": {
+                "WORD:SHORT": 3,
+                "END": 1,
+                "WORD:MED": 1,
+                "PAUSE:,": 2,
+                "SEG:DASH_ASIDE": 1,
+                "PAUSE::": 1
+            },
+            "WORD:MED|WORD:LONG|WORD:SHORT": {
+                "WORD:SHORT": 1,
+                "WORD:MED": 1,
+                "WORD:LONG": 1
+            },
+            "WORD:MED|WORD:MED|PAUSE:,": {
+                "END": 3,
+                "WORD:SHORT": 2
+            },
+            "WORD:MED|WORD:MED|WORD:LONG": {
+                "END": 1,
+                "WORD:MED": 2
+            },
+            "WORD:MED|WORD:SHORT|WORD:MED": {
+                "WORD:LONG": 3,
+                "WORD:SHORT": 19,
+                "WORD:MED": 10,
+                "END": 2
+            },
+            "START|WORD:LONG|WORD:MED": {
+                "WORD:SHORT": 1,
+                "END": 2
+            },
+            "WORD:LONG|WORD:MED|WORD:SHORT": {
+                "WORD:MED": 2,
+                "WORD:SHORT": 4,
+                "END": 1,
+                "WORD:LONG": 2
+            },
+            "WORD:MED|WORD:SHORT|PAUSE:,": {
+                "END": 5,
+                "WORD:SHORT": 2
+            },
+            "START|WORD:SHORT|WORD:MED": {
+                "WORD:SHORT": 11,
+                "WORD:MED": 1,
+                "END": 1
+            },
+            "WORD:MED|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 14,
+                "WORD:MED": 5,
+                "WORD:LONG": 4,
+                "PAUSE:,": 3
+            },
+            "WORD:LONG|WORD:SHORT|WORD:MED": {
+                "WORD:SHORT": 3,
+                "PAUSE:,": 1,
+                "WORD:MED": 1
+            },
+            "WORD:LONG|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 3
+            },
+            "WORD:SHORT|WORD:MED|PAUSE:,": {
+                "END": 4,
+                "WORD:SHORT": 5
+            },
+            "WORD:SHORT|WORD:LONG|WORD:LONG": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 3
+            },
+            "WORD:LONG|WORD:LONG|WORD:MED": {
+                "END": 2
+            },
+            "WORD:SHORT|WORD:SHORT|PAUSE:,": {
+                "END": 7,
+                "WORD:MED": 1
+            },
+            "START|WORD:MED|WORD:MED": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 2,
+                "END": 1
+            },
+            "WORD:SHORT|PAUSE:,|WORD:MED": {
+                "PAUSE:,": 1
+            },
+            "PAUSE:,|WORD:MED|PAUSE:,": {
+                "WORD:SHORT": 2
+            },
+            "WORD:MED|PAUSE:,|WORD:SHORT": {
+                "WORD:SHORT": 5,
+                "PAUSE::": 1,
+                "WORD:MED": 3
+            },
+            "PAUSE:,|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 4,
+                "WORD:MED": 2
+            },
+            "WORD:SHORT|WORD:SHORT|SEG:SQUOTE": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|SEG:SQUOTE|WORD:MED": {
+                "WORD:SHORT": 1
+            },
+            "SEG:SQUOTE|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 1
+            },
+            "WORD:MED|WORD:LONG|WORD:MED": {
+                "WORD:MED": 4,
+                "PAUSE:,": 1,
+                "END": 2
+            },
+            "WORD:LONG|WORD:MED|WORD:MED": {
+                "WORD:MED": 2,
+                "WORD:SHORT": 3,
+                "END": 1
+            },
+            "WORD:SHORT|WORD:LONG|WORD:MED": {
+                "WORD:SHORT": 7,
+                "WORD:MED": 2
+            },
+            "START|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 1
+            },
+            "START|WORD:SHORT|SEG:SQUOTE": {
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|SEG:SQUOTE|WORD:SHORT": {
+                "WORD:SHORT": 1,
+                "WORD:MED": 1
+            },
+            "SEG:SQUOTE|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|WORD:LONG|PAUSE:,": {
+                "WORD:SHORT": 1,
+                "END": 2
+            },
+            "WORD:LONG|PAUSE:,|WORD:SHORT": {
+                "WORD:LONG": 2
+            },
+            "PAUSE:,|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 2
+            },
+            "WORD:MED|WORD:LONG|PAUSE:,": {
+                "END": 1,
+                "WORD:SHORT": 1
+            },
+            "START|WORD:MED|PAUSE:,": {
+                "WORD:MED": 1,
+                "END": 4
+            },
+            "WORD:MED|PAUSE:,|WORD:MED": {
+                "PAUSE:,": 1
+            },
+            "PAUSE:,|WORD:SHORT|PAUSE::": {
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|PAUSE::|WORD:SHORT": {
+                "WORD:MED": 1
+            },
+            "PAUSE::|WORD:SHORT|WORD:MED": {
+                "WORD:MED": 1
+            },
+            "START|WORD:MED|WORD:LONG": {
+                "WORD:MED": 4
+            },
+            "WORD:LONG|WORD:MED|PAUSE:,": {
+                "END": 1
+            },
+            "WORD:MED|WORD:SHORT|PAUSE::": {
+                "WORD:LONG": 1
+            },
+            "WORD:SHORT|PAUSE::|WORD:LONG": {
+                "END": 1
+            },
+            "START|WORD:LONG|PAUSE:,": {
+                "END": 2
+            },
+            "WORD:MED|WORD:LONG|SEG:DASH_ASIDE": {
+                "END": 1
+            },
+            "SEG:SQUOTE|WORD:SHORT|WORD:MED": {
+                "WORD:MED": 1
+            },
+            "WORD:LONG|WORD:LONG|WORD:SHORT": {
+                "WORD:SHORT": 3
+            },
+            "START|WORD:SHORT|PAUSE:,": {
+                "END": 1
+            },
+            "WORD:SHORT|PAUSE:,|WORD:SHORT": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 1
+            },
+            "PAUSE:,|WORD:SHORT|WORD:MED": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 2,
+                "PAUSE:,": 1
+            },
+            "WORD:LONG|WORD:SHORT|PAUSE:,": {
+                "END": 2
+            },
+            "START|WORD:LONG|WORD:SHORT": {
+                "END": 1
+            },
+            "WORD:MED|WORD:LONG|PAUSE::": {
+                "WORD:LONG": 1
+            },
+            "WORD:LONG|PAUSE::|WORD:LONG": {
+                "WORD:MED": 1
+            },
+            "PAUSE::|WORD:LONG|WORD:MED": {
+                "WORD:SHORT": 1
+            }
+        },
+        "DASH_ASIDE": {
+            "START|START|START": {
+                "WORD:SHORT": 19,
+                "WORD:MED": 9,
+                "WORD:LONG": 2
+            },
+            "START|START|WORD:SHORT": {
+                "WORD:SHORT": 12,
+                "PAUSE:,": 3,
+                "WORD:MED": 2,
+                "WORD:LONG": 2
+            },
+            "START|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 9,
+                "WORD:MED": 2,
+                "WORD:LONG": 1
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT": {
+                "WORD:MED": 8,
+                "WORD:SHORT": 16,
+                "WORD:LONG": 5,
+                "PAUSE:,": 2,
+                "END": 5
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:MED": {
+                "END": 1,
+                "WORD:SHORT": 9,
+                "WORD:LONG": 1,
+                "WORD:MED": 2,
+                "PAUSE:,": 3
+            },
+            "START|START|WORD:MED": {
+                "WORD:SHORT": 5,
+                "PAUSE:,": 2,
+                "WORD:MED": 1,
+                "WORD:LONG": 1
+            },
+            "START|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 4,
+                "WORD:MED": 1
+            },
+            "WORD:MED|WORD:SHORT|WORD:SHORT": {
+                "WORD:MED": 3,
+                "END": 2,
+                "WORD:SHORT": 5,
+                "WORD:LONG": 1,
+                "SEG:QUOTE": 1
+            },
+            "WORD:SHORT|WORD:MED|WORD:SHORT": {
+                "END": 1,
+                "WORD:MED": 5,
+                "WORD:SHORT": 5,
+                "WORD:LONG": 2
+            },
+            "WORD:MED|WORD:SHORT|WORD:MED": {
+                "WORD:MED": 3,
+                "WORD:SHORT": 2,
+                "END": 2,
+                "PAUSE:,": 1
+            },
+            "WORD:SHORT|WORD:MED|WORD:MED": {
+                "WORD:SHORT": 3,
+                "END": 2,
+                "WORD:MED": 3,
+                "PAUSE:,": 1
+            },
+            "WORD:MED|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 2,
+                "END": 1,
+                "WORD:MED": 2
+            },
+            "START|WORD:MED|PAUSE:,": {
+                "WORD:MED": 2
+            },
+            "WORD:MED|PAUSE:,|WORD:MED": {
+                "PAUSE:,": 3,
+                "WORD:SHORT": 1,
+                "END": 1
+            },
+            "PAUSE:,|WORD:MED|PAUSE:,": {
+                "WORD:SHORT": 2,
+                "WORD:LONG": 1
+            },
+            "WORD:MED|PAUSE:,|WORD:SHORT": {
+                "WORD:LONG": 2,
+                "SEG:QUOTE": 1,
+                "WORD:MED": 2
+            },
+            "PAUSE:,|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 1,
+                "END": 1
+            },
+            "WORD:SHORT|WORD:LONG|WORD:SHORT": {
+                "SEG:QUOTE": 1,
+                "WORD:SHORT": 5,
+                "PAUSE:,": 1,
+                "WORD:MED": 1
+            },
+            "WORD:LONG|WORD:SHORT|SEG:QUOTE": {
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|SEG:QUOTE|WORD:SHORT": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 1
+            },
+            "SEG:QUOTE|WORD:SHORT|WORD:MED": {
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|WORD:MED|WORD:LONG": {
+                "WORD:SHORT": 1,
+                "END": 1
+            },
+            "WORD:MED|WORD:LONG|WORD:SHORT": {
+                "WORD:SHORT": 1,
+                "WORD:MED": 1
+            },
+            "WORD:LONG|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 3,
+                "WORD:MED": 1,
+                "WORD:LONG": 2
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 4,
+                "END": 1,
+                "WORD:MED": 3,
+                "WORD:LONG": 1
+            },
+            "WORD:MED|WORD:SHORT|WORD:LONG": {
+                "END": 1,
+                "WORD:SHORT": 1,
+                "PAUSE:,": 1
+            },
+            "WORD:MED|PAUSE:,|WORD:LONG": {
+                "PAUSE:,": 1
+            },
+            "PAUSE:,|WORD:LONG|PAUSE:,": {
+                "WORD:LONG": 1,
+                "WORD:SHORT": 1,
+                "WORD:MED": 1
+            },
+            "WORD:LONG|PAUSE:,|WORD:LONG": {
+                "PAUSE:,": 1
+            },
+            "WORD:LONG|PAUSE:,|WORD:SHORT": {
+                "END": 1,
+                "WORD:MED": 1
+            },
+            "START|WORD:SHORT|PAUSE:,": {
+                "WORD:SHORT": 3
+            },
+            "WORD:SHORT|PAUSE:,|WORD:SHORT": {
+                "PAUSE:,": 1,
+                "WORD:MED": 1,
+                "WORD:SHORT": 4
+            },
+            "PAUSE:,|WORD:SHORT|PAUSE:,": {
+                "WORD:SHORT": 1
+            },
+            "PAUSE:,|WORD:SHORT|WORD:MED": {
+                "WORD:LONG": 1,
+                "WORD:MED": 1,
+                "WORD:SHORT": 1,
+                "END": 1
+            },
+            "PAUSE:,|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 2,
+                "WORD:MED": 2
+            },
+            "WORD:SHORT|WORD:SHORT|PAUSE:,": {
+                "WORD:SHORT": 2
+            },
+            "WORD:MED|WORD:MED|WORD:MED": {
+                "WORD:MED": 3,
+                "WORD:LONG": 1,
+                "WORD:SHORT": 2
+            },
+            "WORD:MED|WORD:MED|WORD:LONG": {
+                "WORD:LONG": 1,
+                "END": 1
+            },
+            "WORD:MED|WORD:LONG|WORD:LONG": {
+                "END": 1
+            },
+            "START|WORD:MED|WORD:MED": {
+                "PAUSE:,": 1
+            },
+            "WORD:MED|WORD:MED|PAUSE:,": {
+                "WORD:MED": 1,
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|WORD:LONG|WORD:MED": {
+                "WORD:SHORT": 3
+            },
+            "WORD:LONG|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 1,
+                "END": 2
+            },
+            "START|WORD:SHORT|WORD:MED": {
+                "END": 1,
+                "WORD:MED": 1
+            },
+            "PAUSE:,|WORD:SHORT|SEG:QUOTE": {
+                "WORD:SHORT": 1
+            },
+            "SEG:QUOTE|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 1
+            },
+            "START|START|WORD:LONG": {
+                "WORD:SHORT": 2
+            },
+            "START|WORD:LONG|WORD:SHORT": {
+                "END": 1,
+                "WORD:LONG": 1
+            },
+            "WORD:SHORT|WORD:LONG|WORD:LONG": {
+                "PAUSE:,": 1
+            },
+            "WORD:LONG|WORD:LONG|PAUSE:,": {
+                "END": 1
+            },
+            "WORD:LONG|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 1
+            },
+            "WORD:LONG|WORD:SHORT|PAUSE:,": {
+                "WORD:LONG": 1
+            },
+            "WORD:SHORT|PAUSE:,|WORD:LONG": {
+                "PAUSE:,": 1
+            },
+            "WORD:LONG|PAUSE:,|WORD:MED": {
+                "WORD:MED": 1
+            },
+            "PAUSE:,|WORD:MED|WORD:MED": {
+                "WORD:LONG": 1
+            },
+            "WORD:SHORT|WORD:MED|PAUSE:,": {
+                "WORD:MED": 2,
+                "WORD:SHORT": 2
+            },
+            "PAUSE:,|WORD:MED|WORD:SHORT": {
+                "WORD:LONG": 1
+            },
+            "WORD:SHORT|WORD:LONG|PAUSE:,": {
+                "WORD:SHORT": 1
+            },
+            "START|WORD:MED|WORD:LONG": {
+                "WORD:SHORT": 1
+            },
+            "WORD:LONG|WORD:SHORT|WORD:MED": {
+                "WORD:MED": 2
+            },
+            "START|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 1,
+                "END": 1
+            },
+            "WORD:SHORT|WORD:SHORT|SEG:QUOTE": {
+                "END": 1
+            }
+        },
+        "PAREN": {
+            "START|START|START": {
+                "WORD:SHORT": 8,
+                "WORD:MED": 2
+            },
+            "START|START|WORD:SHORT": {
+                "END": 1,
+                "WORD:MED": 5,
+                "WORD:SHORT": 1,
+                "SEG:QUOTE": 1
+            },
+            "START|WORD:SHORT|WORD:MED": {
+                "PAUSE:,": 2,
+                "WORD:SHORT": 2,
+                "WORD:MED": 1
+            },
+            "WORD:SHORT|WORD:MED|PAUSE:,": {
+                "WORD:SHORT": 2
+            },
+            "WORD:MED|PAUSE:,|WORD:SHORT": {
+                "WORD:MED": 1,
+                "WORD:LONG": 1,
+                "WORD:SHORT": 1
+            },
+            "PAUSE:,|WORD:SHORT|WORD:MED": {
+                "WORD:SHORT": 1,
+                "WORD:LONG": 1
+            },
+            "WORD:SHORT|WORD:MED|WORD:SHORT": {
+                "PAUSE:,": 1,
+                "WORD:SHORT": 3,
+                "WORD:MED": 4,
+                "PAUSE:;": 1
+            },
+            "WORD:MED|WORD:SHORT|PAUSE:,": {
+                "WORD:SHORT": 2
+            },
+            "WORD:SHORT|PAUSE:,|WORD:SHORT": {
+                "WORD:LONG": 1,
+                "WORD:SHORT": 1
+            },
+            "PAUSE:,|WORD:SHORT|WORD:LONG": {
+                "WORD:MED": 2
+            },
+            "WORD:SHORT|WORD:LONG|WORD:MED": {
+                "WORD:SHORT": 2,
+                "WORD:MED": 3,
+                "END": 1
+            },
+            "WORD:LONG|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 1,
+                "PAUSE:,": 1
+            },
+            "WORD:MED|WORD:SHORT|WORD:SHORT": {
+                "WORD:LONG": 3,
+                "WORD:SHORT": 6,
+                "WORD:MED": 1
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 5,
+                "WORD:MED": 3,
+                "SEG:DASH_ASIDE": 1
+            },
+            "WORD:SHORT|WORD:LONG|WORD:SHORT": {
+                "WORD:SHORT": 6,
+                "WORD:LONG": 1
+            },
+            "WORD:LONG|WORD:SHORT|WORD:SHORT": {
+                "END": 1,
+                "WORD:MED": 3,
+                "WORD:LONG": 2,
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:MED": {
+                "WORD:LONG": 3,
+                "PAUSE:;": 1,
+                "WORD:SHORT": 3,
+                "END": 1,
+                "WORD:MED": 4
+            },
+            "WORD:SHORT|WORD:MED|WORD:LONG": {
+                "WORD:SHORT": 3,
+                "PAUSE:,": 1
+            },
+            "WORD:MED|WORD:LONG|WORD:SHORT": {
+                "WORD:SHORT": 1,
+                "WORD:MED": 1,
+                "SEG:QUOTE": 1
+            },
+            "WORD:SHORT|WORD:MED|PAUSE:;": {
+                "WORD:SHORT": 1
+            },
+            "WORD:MED|PAUSE:;|WORD:SHORT": {
+                "WORD:MED": 1
+            },
+            "PAUSE:;|WORD:SHORT|WORD:MED": {
+                "WORD:MED": 1
+            },
+            "WORD:SHORT|WORD:MED|WORD:MED": {
+                "WORD:SHORT": 3,
+                "END": 3,
+                "WORD:MED": 2,
+                "PAUSE:;": 1
+            },
+            "WORD:MED|WORD:MED|WORD:SHORT": {
+                "WORD:LONG": 1,
+                "WORD:SHORT": 4,
+                "WORD:MED": 1
+            },
+            "WORD:MED|WORD:SHORT|WORD:LONG": {
+                "WORD:MED": 1
+            },
+            "WORD:LONG|WORD:MED|WORD:MED": {
+                "WORD:SHORT": 1,
+                "PAUSE:,": 1,
+                "SEG:QUOTE": 1
+            },
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT": {
+                "WORD:MED": 6,
+                "WORD:LONG": 4,
+                "WORD:SHORT": 5,
+                "SEG:QUOTE": 1
+            },
+            "WORD:MED|WORD:SHORT|WORD:MED": {
+                "WORD:SHORT": 3,
+                "WORD:MED": 2
+            },
+            "PAUSE:,|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 2
+            },
+            "WORD:LONG|WORD:SHORT|WORD:LONG": {
+                "WORD:SHORT": 2
+            },
+            "START|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 1
+            },
+            "WORD:MED|WORD:LONG|PAUSE:,": {
+                "WORD:SHORT": 1
+            },
+            "WORD:LONG|PAUSE:,|WORD:SHORT": {
+                "WORD:MED": 1
+            },
+            "WORD:LONG|WORD:SHORT|WORD:MED": {
+                "WORD:MED": 1
+            },
+            "WORD:MED|WORD:MED|WORD:MED": {
+                "WORD:SHORT": 2
+            },
+            "WORD:MED|WORD:SHORT|PAUSE:;": {
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|PAUSE:;|WORD:SHORT": {
+                "WORD:SHORT": 1
+            },
+            "PAUSE:;|WORD:SHORT|WORD:SHORT": {
+                "WORD:MED": 1
+            },
+            "WORD:MED|WORD:MED|PAUSE:,": {
+                "WORD:SHORT": 1
+            },
+            "WORD:MED|WORD:MED|SEG:QUOTE": {
+                "WORD:SHORT": 1
+            },
+            "WORD:MED|SEG:QUOTE|WORD:SHORT": {
+                "SEG:QUOTE": 1
+            },
+            "SEG:QUOTE|WORD:SHORT|SEG:QUOTE": {
+                "END": 1
+            },
+            "START|WORD:SHORT|SEG:QUOTE": {
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|SEG:QUOTE|WORD:SHORT": {
+                "WORD:SHORT": 2
+            },
+            "SEG:QUOTE|WORD:SHORT|WORD:SHORT": {
+                "WORD:SHORT": 1,
+                "WORD:MED": 1
+            },
+            "WORD:SHORT|WORD:SHORT|SEG:QUOTE": {
+                "END": 1
+            },
+            "START|START|WORD:MED": {
+                "WORD:SHORT": 2
+            },
+            "START|WORD:MED|WORD:SHORT": {
+                "WORD:SHORT": 2
+            },
+            "WORD:MED|WORD:MED|PAUSE:;": {
+                "WORD:LONG": 1
+            },
+            "WORD:MED|PAUSE:;|WORD:LONG": {
+                "WORD:SHORT": 1
+            },
+            "PAUSE:;|WORD:LONG|WORD:SHORT": {
+                "WORD:LONG": 1
+            },
+            "WORD:LONG|WORD:SHORT|SEG:QUOTE": {
+                "WORD:SHORT": 1
+            },
+            "WORD:SHORT|WORD:LONG|SEG:DASH_ASIDE": {
+                "END": 1
+            }
+        },
+        "SQUOTE": {
+            "START|START|START": {
+                "WORD:MED": 1,
+                "WORD:LONG": 1,
+                "WORD:SHORT": 1
+            },
+            "START|START|WORD:MED": {
+                "END": 1
+            },
+            "START|START|WORD:LONG": {
+                "WORD:MED": 1
+            },
+            "START|WORD:LONG|WORD:MED": {
+                "END": 1
+            },
+            "START|START|WORD:SHORT": {
+                "WORD:MED": 1
+            },
+            "START|WORD:SHORT|WORD:MED": {
+                "WORD:LONG": 1
+            },
+            "WORD:SHORT|WORD:MED|WORD:LONG": {
+                "WORD:SHORT": 1
+            },
+            "WORD:MED|WORD:LONG|WORD:SHORT": {
+                "WORD:SHORT": 1
+            },
+            "WORD:LONG|WORD:SHORT|WORD:SHORT": {
+                "END": 1
+            }
+        }
+    },
+    "lengthDists": {
+        "SENTENCE": [
+            4,
+            1,
+            1,
+            13,
+            1,
+            17,
+            41,
+            4,
+            1,
+            30,
+            3,
+            1,
+            22,
+            19,
+            1,
+            13,
+            7,
+            1,
+            19,
+            16,
+            1,
+            1,
+            5,
+            19,
+            8,
+            8,
+            1,
+            9,
+            6,
+            5,
+            1,
+            16,
+            1,
+            1,
+            4,
+            12,
+            1,
+            24,
+            4,
+            6,
+            1,
+            7,
+            9,
+            8,
+            18,
+            10,
+            18,
+            1,
+            7,
+            23,
+            1,
+            13,
+            6,
+            1,
+            24,
+            1,
+            9,
+            37,
+            18,
+            22,
+            29,
+            12,
+            1,
+            6,
+            27,
+            19,
+            24,
+            24,
+            11,
+            32,
+            2,
+            1,
+            29,
+            10,
+            5,
+            17,
+            13,
+            10,
+            17,
+            12,
+            34,
+            12,
+            1,
+            1,
+            27,
+            21,
+            27,
+            2,
+            33,
+            12,
+            30,
+            1,
+            13,
+            4,
+            1,
+            28,
+            43,
+            25,
+            3,
+            1,
+            18,
+            21,
+            16,
+            19,
+            7,
+            12,
+            22,
+            11,
+            13,
+            1,
+            37,
+            27,
+            14,
+            11,
+            7,
+            15,
+            10,
+            1,
+            1,
+            15,
+            19,
+            1,
+            8,
+            2,
+            10,
+            1,
+            5,
+            15,
+            1,
+            8,
+            15,
+            3,
+            28,
+            7,
+            6,
+            15,
+            29,
+            25,
+            22,
+            23,
+            12,
+            12,
+            8,
+            11,
+            7,
+            1,
+            24,
+            12,
+            13,
+            12,
+            18,
+            26,
+            5,
+            3,
+            1,
+            5,
+            19,
+            23,
+            13,
+            5,
+            1,
+            15,
+            39,
+            6,
+            21,
+            13,
+            22,
+            19,
+            17,
+            36,
+            12,
+            31,
+            15,
+            13,
+            23,
+            8,
+            7,
+            1,
+            10,
+            5,
+            1,
+            25,
+            3,
+            4,
+            2,
+            29,
+            15,
+            38,
+            23,
+            13,
+            19,
+            13,
+            21,
+            10,
+            10,
+            13,
+            11,
+            9,
+            18,
+            9,
+            12,
+            1,
+            1,
+            22,
+            5,
+            8,
+            19,
+            9,
+            3,
+            1,
+            9,
+            18,
+            23,
+            29,
+            19,
+            26,
+            37,
+            21,
+            22,
+            13,
+            19,
+            43,
+            1,
+            1,
+            1,
+            23,
+            22,
+            21,
+            1,
+            1,
+            21,
+            1,
+            4,
+            14,
+            21,
+            19,
+            1,
+            6,
+            6,
+            1,
+            2,
+            6,
+            4,
+            9,
+            1,
+            26,
+            10,
+            41,
+            3,
+            13,
+            37,
+            7,
+            24,
+            10,
+            25,
+            1,
+            1,
+            10,
+            16,
+            1,
+            4,
+            22,
+            33,
+            11,
+            13,
+            23,
+            8,
+            9,
+            11,
+            1,
+            24,
+            1,
+            21,
+            10,
+            21,
+            14,
+            1,
+            2,
+            14,
+            1,
+            11,
+            20,
+            22,
+            14,
+            1,
+            24,
+            18,
+            9,
+            6,
+            13,
+            11,
+            14,
+            9,
+            2,
+            1,
+            27,
+            5,
+            5,
+            16,
+            9,
+            20,
+            19,
+            18,
+            10,
+            1,
+            7,
+            3,
+            14,
+            1,
+            6,
+            18,
+            10,
+            3,
+            1,
+            10,
+            15,
+            16,
+            41,
+            22,
+            2,
+            1,
+            24,
+            9,
+            5,
+            1,
+            18,
+            3,
+            2,
+            1,
+            19,
+            8,
+            8,
+            15,
+            7,
+            7,
+            1,
+            4,
+            34,
+            24,
+            9,
+            12,
+            13,
+            31,
+            39,
+            14,
+            17,
+            14,
+            2,
+            1,
+            12,
+            18,
+            1,
+            6,
+            19,
+            37,
+            11,
+            20,
+            9,
+            3,
+            23,
+            6,
+            1,
+            16,
+            14,
+            1,
+            31,
+            21,
+            22,
+            15,
+            1,
+            18,
+            11,
+            2,
+            1,
+            5,
+            12
+        ],
+        "QUOTE": [
+            6,
+            6,
+            2,
+            16,
+            1,
+            5,
+            7,
+            4,
+            1,
+            1,
+            1,
+            8,
+            25,
+            10,
+            4,
+            8,
+            8,
+            4,
+            2,
+            16,
+            20,
+            9,
+            3,
+            11,
+            22,
+            13,
+            3,
+            4,
+            5,
+            13,
+            11,
+            2,
+            1,
+            2,
+            4,
+            2,
+            10,
+            32,
+            19,
+            13,
+            10,
+            10,
+            13,
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            2,
+            2,
+            3,
+            3,
+            1,
+            3,
+            18,
+            10,
+            12,
+            15,
+            9,
+            1,
+            18,
+            8,
+            3,
+            10,
+            2,
+            2,
+            1,
+            13,
+            17,
+            16,
+            5,
+            2,
+            10,
+            1,
+            9,
+            2,
+            2,
+            27,
+            24,
+            10,
+            2,
+            12,
+            9,
+            19,
+            24,
+            42,
+            14,
+            3,
+            20,
+            36
+        ],
+        "DASH_ASIDE": [
+            4,
+            5,
+            9,
+            5,
+            13,
+            15,
+            9,
+            7,
+            7,
+            17,
+            7,
+            12,
+            7,
+            13,
+            2,
+            15,
+            2,
+            7,
+            10,
+            12,
+            6,
+            7,
+            22,
+            7,
+            8,
+            5,
+            9,
+            7,
+            2,
+            16
+        ],
+        "PAREN": [
+            1,
+            15,
+            32,
+            14,
+            13,
+            37,
+            7,
+            20,
+            16,
+            15
+        ],
+        "SQUOTE": [
+            1,
+            2,
+            5
+        ]
+    },
+    "terminators": {
+        ".": 366,
+        "?": 10
+    },
+    "quoteSentences": 31,
+    "quoteSentencesWithAttr": 0,
+    "attrNameWordCounts": [
+        
+    ],
+    "attrNameLengths": [
+        
+    ],
+    "attrTitleWordCounts": [
+        
+    ],
+    "attrTitleLengths": [
+        
+    ],
+    "contextDepth": 3
+}
