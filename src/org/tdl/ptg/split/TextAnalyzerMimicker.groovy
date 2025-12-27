@@ -24,15 +24,16 @@ class Globals {
 
 @Canonical
 class Token {
-    String type      // WORD, TERM, PAUSE, OPEN, CLOSE, TOGGLE, OPEN_SQUOTE, CLOSE_SQUOTE
+    String type      // WORD, TERM, PAUSE, OPEN, CLOSE, TOGGLE, OPEN_SQUOTE, CLOSE_SQUOTE, HYPHEN
     String text = ''
     String value = ''
-    String context = '' // QUOTE, PAREN, DASH, SENTENCE
+    String context = '' // QUOTE, PAREN, DASH, SENTENCE, HYPHEN
     int wordLength = 0
 }
 
 class Utils {
     static List tokenizeStructure(String word) {
+        // STRICT: Only letters. Numbers are ignored.
         def cleanWord = word.findAll { Character.isLetter(it as char) }.join('').toLowerCase()
         if (!cleanWord) return []
         def tokens = []
@@ -58,7 +59,6 @@ class Utils {
 
     static String smartCaps(String s) {
         if (!s) return s
-        // Skip over markers like <, {, [ to find the first letter
         def m = (s =~ /[a-zA-Z]/)
         if (m.find()) {
             int idx = m.start()
@@ -74,11 +74,12 @@ class Utils {
 
 @Canonical
 class Segment {
-    String type = 'SENTENCE' // SENTENCE, QUOTE, SQUOTE, PAREN, DASH
+    String type = 'SENTENCE' // SENTENCE, QUOTE, SQUOTE, PAREN, DASH, HYPHEN
     List<Integer> wordLengths = []
     List<Segment> children = []
     int childInsertPosition = -1
     String terminator = ''
+    String debugText = ''
 }
 
 // ----------------------------------------------------------------
@@ -87,7 +88,6 @@ class Segment {
 
 class Tokenizer {
 
-    // Helpers for the "Whitespace" rules
     boolean isBoundary(char c) {
         return Character.isWhitespace(c) || Globals.TERMINATORS.contains(c.toString()) || Globals.PAUSES.contains(c.toString()) || c == ')' || c == ']'
     }
@@ -100,19 +100,25 @@ class Tokenizer {
             char c = text.charAt(i)
             String s = c.toString()
 
-            // 1. Single Quote / Apostrophe Logic
+            // Acronym Logic
+            boolean isAcronymDot = false
+            if (s == '.') {
+                boolean prevIsAlpha = buffer.length() > 0 && Character.isLetter(buffer.charAt(buffer.length() - 1))
+                boolean nextIsAlpha = (i < text.length() - 1) && Character.isLetter(text.charAt(i+1))
+                if (prevIsAlpha && nextIsAlpha) isAcronymDot = true
+                else if (prevIsAlpha && buffer.length() >= 2 && buffer.charAt(buffer.length() - 2) == '.') isAcronymDot = true
+            }
+
             if (s == '\'') {
                 boolean prevIsSpace = (i == 0) || isBoundary(text.charAt(i-1))
                 boolean nextIsAlpha = (i < text.length() - 1) && Character.isLetterOrDigit(text.charAt(i+1))
                 boolean prevIsAlpha = (i > 0) && !isBoundary(text.charAt(i-1))
                 boolean nextIsSpace = (i == text.length() - 1) || isBoundary(text.charAt(i+1))
 
-                // "Opening quotes always have whitespace before and an alphanumeric after."
                 if (prevIsSpace && nextIsAlpha) {
                     if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
                     tokens << new Token(type: 'OPEN_SQUOTE', value: "'", context: 'SQUOTE')
                 }
-                // "Closing quotes always have non-whitespace before and whitespace after."
                 else if (prevIsAlpha && nextIsSpace) {
                     if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
                     tokens << new Token(type: 'CLOSE_SQUOTE', value: "'", context: 'SQUOTE')
@@ -121,17 +127,27 @@ class Tokenizer {
                     buffer.append(c)
                 }
             }
-            // 2. Double Quotes (Generic Toggle)
+            else if (isAcronymDot) {
+                buffer.append(c)
+            }
+            else if (s == '-') {
+                boolean prevIsAlpha = (i > 0) && Character.isLetter(text.charAt(i-1))
+                boolean nextIsAlpha = (i < text.length() - 1) && Character.isLetter(text.charAt(i+1))
+                if (prevIsAlpha && nextIsAlpha) {
+                    if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
+                    tokens << new Token(type: 'HYPHEN', value: '-', context: 'HYPHEN')
+                } else {
+                    if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
+                }
+            }
             else if (s == '"') {
                 if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
                 tokens << new Token(type: 'TOGGLE', value: '"', context: 'QUOTE')
             }
-            // 3. Em-Dash (Generic Toggle)
             else if (s == '\u2014') {
                 if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
                 tokens << new Token(type: 'TOGGLE', value: '\u2014', context: 'DASH')
             }
-            // 4. Parentheses
             else if (s == '(' || s == '[') {
                 if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
                 tokens << new Token(type: 'OPEN', value: '(', context: 'PAREN')
@@ -140,21 +156,17 @@ class Tokenizer {
                 if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
                 tokens << new Token(type: 'CLOSE', value: ')', context: 'PAREN')
             }
-            // 5. Terminators
             else if (Globals.TERMINATORS.contains(s)) {
                 if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
                 tokens << new Token(type: 'TERM', value: s, context: 'SENTENCE')
             }
-            // 6. Pauses
             else if (Globals.PAUSES.contains(s)) {
                 if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
                 tokens << new Token(type: 'PAUSE', value: s)
             }
-            // 7. Whitespace
             else if (Character.isWhitespace(c)) {
                 if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
             }
-            // 8. Word content
             else {
                 buffer.append(c)
             }
@@ -186,7 +198,11 @@ class Parser {
         List<Segment> stack = [new Segment(type: 'SENTENCE')]
 
         tokens.each { tok ->
-            if (stack.isEmpty()) stack.push(new Segment(type: 'SENTENCE'))
+            if (stack.isEmpty()) stack.add(new Segment(type: 'SENTENCE'))
+
+            String visual = tok.text ?: tok.value
+            if (visual) stack.first().debugText += visual + " "
+
             Segment current = stack.last()
 
             switch (tok.type) {
@@ -198,40 +214,84 @@ class Parser {
                     current.children << new Segment(type: 'PAUSE', terminator: tok.value, childInsertPosition: current.wordLengths.size())
                     break
 
-                case 'OPEN': // Parens
+                case 'HYPHEN':
+                    current.children << new Segment(type: 'HYPHEN', terminator: '-', childInsertPosition: current.wordLengths.size())
+                    break
+
+                case 'OPEN':
                     if (!stackHasType(stack, tok.context)) {
                         Segment child = new Segment(type: tok.context, childInsertPosition: current.wordLengths.size())
                         current.children << child
-                        stack.push(child)
+                        stack.add(child)
                     }
                     break
 
-                case 'CLOSE': // Parens
-                    if (current.type == tok.context) stack.removeLast()
+                case 'CLOSE':
+                    // AUTO-CLOSE DASH: If we are in a dash inside a paren, and paren closes, pop dash.
+                    if (current.type == 'DASH' && stack.size() > 1 && stack[stack.size()-2].type == tok.context) {
+                        stack.removeLast()
+                        current = stack.last()
+                    }
+
+                    if (current.type == tok.context) {
+                        stack.removeLast()
+                        if (current.terminator && Globals.TERMINATORS.contains(current.terminator)) {
+                            if (!stack.isEmpty() && stack.last().type == 'SENTENCE') {
+                                completed << stack.first()
+                                stack.clear()
+                                stack.add(new Segment(type: 'SENTENCE'))
+                            }
+                        }
+                    }
                     break
 
-                case 'OPEN_SQUOTE': // Single Quote Open
+                case 'OPEN_SQUOTE':
                     if (!stackHasType(stack, 'SQUOTE')) {
                         Segment child = new Segment(type: 'SQUOTE', childInsertPosition: current.wordLengths.size())
                         current.children << child
-                        stack.push(child)
+                        stack.add(child)
                     }
                     break
 
-                case 'CLOSE_SQUOTE': // Single Quote Close
+                case 'CLOSE_SQUOTE':
+                    // AUTO-CLOSE DASH
+                    if (current.type == 'DASH' && stack.size() > 1 && stack[stack.size()-2].type == 'SQUOTE') {
+                        stack.removeLast()
+                        current = stack.last()
+                    }
+
                     if (current.type == 'SQUOTE') {
                         stack.removeLast()
+                        if (current.terminator && Globals.TERMINATORS.contains(current.terminator)) {
+                            if (!stack.isEmpty() && stack.last().type == 'SENTENCE') {
+                                completed << stack.first()
+                                stack.clear(); stack.add(new Segment(type: 'SENTENCE'))
+                            }
+                        }
                     }
-                    // Else: ignore per rules
                     break
 
-                case 'TOGGLE': // Double Quotes, Dashes
+                case 'TOGGLE':
+                    // AUTO-CLOSE DASH
+                    if (current.type == 'DASH' && stack.size() > 1 && stack[stack.size()-2].type == tok.context) {
+                        stack.removeLast()
+                        current = stack.last()
+                    }
+
                     if (current.type == tok.context) {
                         stack.removeLast()
-                    } else if (!stackHasType(stack, tok.context)) {
+                        if (current.terminator && Globals.TERMINATORS.contains(current.terminator)) {
+                            if (!stack.isEmpty() && stack.last().type == 'SENTENCE') {
+                                completed << stack.first()
+                                stack.clear()
+                                stack.add(new Segment(type: 'SENTENCE'))
+                            }
+                        }
+                    }
+                    else if (!stackHasType(stack, tok.context)) {
                         Segment child = new Segment(type: tok.context, childInsertPosition: current.wordLengths.size())
                         current.children << child
-                        stack.push(child)
+                        stack.add(child)
                     }
                     break
 
@@ -239,21 +299,19 @@ class Parser {
                     if (current.type == 'SENTENCE') {
                         current.terminator = tok.value
                         completed << stack.first()
-                        stack.clear(); stack.push(new Segment(type: 'SENTENCE'))
+                        stack.clear(); stack.add(new Segment(type: 'SENTENCE'))
                     }
-                    else if (current.type == 'QUOTE' || current.type == 'DASH') {
+                    else if (current.type == 'DASH') {
                         current.terminator = tok.value
-                        if (current.type == 'DASH') stack.removeLast()
-                    }
-                    else if (current.type == 'SQUOTE' || current.type == 'PAREN') {
                         stack.removeLast()
-                        if (!stack.isEmpty()) {
+                        if (!stack.isEmpty() && stack.last().type == 'SENTENCE') {
                             stack.last().terminator = tok.value
-                            if (stack.last().type == 'SENTENCE') {
-                                completed << stack.first()
-                                stack.clear(); stack.push(new Segment(type: 'SENTENCE'))
-                            }
+                            completed << stack.first()
+                            stack.clear(); stack.add(new Segment(type: 'SENTENCE'))
                         }
+                    }
+                    else if (current.type == 'QUOTE' || current.type == 'SQUOTE' || current.type == 'PAREN') {
+                        current.terminator = tok.value
                     }
                     break
             }
@@ -273,7 +331,9 @@ class Parser {
 class Config {
     boolean analyze = false
     boolean generate = false
-    boolean markingMode = false // New Flag
+    boolean markingMode = false
+    boolean lineOutput = false
+    boolean debug = false
     String wordStatsFile = null
     String sentenceStatsFile = null
     String f_File = null
@@ -292,6 +352,7 @@ Input File        : ${f_File}
 Word Stats Out    : ${wordStatsFile}
 Sentence Stats Out: ${sentenceStatsFile ?: '(None)'}
 Unique Mode       : ${uniqueMode ? 'Active (Saving vocabulary list)' : 'Inactive'}
+Debug Mode        : ${debug ? 'Active (Printing Parse Tree)' : 'Inactive'}
 =============================="""
         } else {
             return """
@@ -299,6 +360,7 @@ Unique Mode       : ${uniqueMode ? 'Active (Saving vocabulary list)' : 'Inactive
 Word Stats In     : ${wordStatsFile}
 Sentence Stats In : ${sentenceStatsFile ?: '(None) - Word List Mode'}
 Output File       : ${f_File ?: 'STDOUT'}
+Output Format     : ${lineOutput ? 'Line-by-Line (-l)' : 'Space-Separated (Default)'}
 N-Gram Mode       : ${ngramMode} (Initial Target)
 Unique Mode       : ${uniqueMode ? 'Active (Fallback: Tri->Bi->Uni)' : 'Inactive'}
 Marking Mode      : ${markingMode ? 'Active (-m)' : 'Inactive'}
@@ -316,7 +378,9 @@ def parseArgs(String[] args) {
         switch (arg) {
             case '-a': cfg.analyze = true; break
             case '-g': cfg.generate = true; break
-            case '-m': cfg.markingMode = true; break // Enable marking
+            case '-m': cfg.markingMode = true; break
+            case '-l': cfg.lineOutput = true; break
+            case '-d': cfg.debug = true; break
             case '-w': cfg.wordStatsFile = args[++i]; break
             case '-s': cfg.sentenceStatsFile = args[++i]; break
             case '-f': cfg.f_File = args[++i]; break
@@ -388,8 +452,12 @@ class StructuralMarkovAnalyzer {
         seg.wordLengths.eachWithIndex { len, i -> streamMap[i] = encodeEntity("WORD", binWordLen(len)) }
         seg.children.each { child ->
             processSegment(child)
-            String val = (child.type == 'PAUSE') ? (child.terminator ?: ',') : child.type
-            streamMap[child.childInsertPosition] = encodeEntity((child.type == 'PAUSE' ? 'PAUSE' : 'SEGMENT'), val)
+            String val = ''
+            if (child.type == 'PAUSE') val = child.terminator ?: ','
+            else if (child.type == 'HYPHEN') val = '-'
+            else val = child.type
+
+            streamMap[child.childInsertPosition] = encodeEntity((child.type == 'PAUSE' || child.type == 'HYPHEN' ? 'PAUSE' : 'SEGMENT'), val)
         }
 
         List<String> stream = []
@@ -443,16 +511,65 @@ class Analyzer {
     Set<String> vocabulary = new HashSet<>()
     Map<String, Map<String, Integer>> transitions = [:]
 
-    void process(Config cfg) {
-        println "📖 Analyzing source..."
-        def text = new File(cfg.f_File).getText("UTF-8")
+    void debugSegments(List<Segment> segments) {
+        println "\n🐛 DEBUG: Parsed Segments Tree:"
+        segments.each { seg ->
+            println "SOURCE: " + seg.debugText.trim()
+            printSegment(seg, 0)
+            println "-" * 40
+        }
+        println "🐛 END DEBUG\n"
+    }
+
+    void printSegment(Segment seg, int depth) {
+        String indent = "  " * depth
+        String info = "${seg.type} [Words: ${seg.wordLengths}]"
+        if (seg.terminator) info += " [Term: '${seg.terminator}']"
+        println "${indent}${info}"
+
+        seg.children.each { child ->
+            if (child.type == 'PAUSE') {
+                println "${indent}  -> PAUSE '${child.terminator}' (at idx ${child.childInsertPosition})"
+            } else if (child.type == 'HYPHEN') {
+                println "${indent}  -> HYPHEN '-' (at idx ${child.childInsertPosition})"
+            } else {
+                println "${indent}  -> CHILD (at idx ${child.childInsertPosition}):"
+                printSegment(child, depth + 2)
+            }
+        }
+    }
+
+    String cleanText(String text) {
+        if (!text) return text
         if (text.length() > 0 && text.charAt(0) == '\uFEFF') text = text.substring(1)
 
-        text = text.replaceAll(/--+/, '\u2014') // Dashes
-        text = text.replaceAll(/[“”]/, '"')      // Smart double quotes
-        text = text.replaceAll(/[‘’]/, "'")      // Smart single quotes
-        text = text.replaceAll(/\r?\n\s*\r?\n/, " . ") // Paragraphs
-        text = text.replaceAll(/\r?\n/, " ") // Word wrap
+        // Normalize using Unicode Escapes to avoid encoding issues
+        // \u201C (Left Double), \u201D (Right Double) -> "
+        text = text.replaceAll(/[\u201C\u201D]/, '"')
+        // \u2018 (Left Single), \u2019 (Right Single) -> '
+        text = text.replaceAll(/[\u2018\u2019]/, "'")
+
+        text = text.replaceAll(/--+/, '\u2014')
+        text = text.replaceAll(/\r?\n\s*\r?\n/, " . ")
+        text = text.replaceAll(/\r?\n/, " ")
+        text = text.trim()
+
+        // Hygiene: Aggressively strip wrapper quotes
+        boolean stripped = true
+        while (stripped && text.length() > 2) {
+            stripped = false
+            if (text.startsWith('"') && text.endsWith('"')) {
+                text = text.substring(1, text.length() - 1).trim()
+                stripped = true
+            }
+        }
+        return text
+    }
+
+    void process(Config cfg) {
+        println "📖 Analyzing source..."
+        def rawText = new File(cfg.f_File).getText("UTF-8")
+        def text = cleanText(rawText)
 
         List<Token> tokens = tokenizer.tokenize(text)
         tokens = tokens.findAll { it != null }
@@ -493,6 +610,11 @@ class Analyzer {
 
         if (cfg.sentenceStatsFile) {
             def segments = parser.parse(tokens)
+
+            if (cfg.debug) debugSegments(segments)
+
+            segments = segments.findAll { seg -> seg.wordLengths.size() > 1 || !seg.children.isEmpty() }
+
             markovAnalyzer.train(segments)
             segments.each { s ->
                 if (s.terminator) transitions.computeIfAbsent('TERM', {[:]}).merge(s.terminator, 1, Integer::sum)
@@ -564,11 +686,20 @@ class Generator {
         println "📂 Loading Word Model..."
         def json = new JsonSlurper().parse(new File(cfg.wordStatsFile))
         if (json.vocabulary) loadedVocabulary = new HashSet<>(json.vocabulary)
-        mainLengthSelector = new WeightedSelector(json.lengthStartStats)
-        json.lengthStartStats.each { k, v ->
+
+        Map<String, Integer> rawLengthStats = json.lengthStartStats
+        if (cfg.pruneMinTokens > 0 && !cfg.sentenceStatsFile) {
+            println "✂️ Pruning words with <= ${cfg.pruneMinTokens} tokens (Word Mode active)..."
+            rawLengthStats = rawLengthStats.findAll { k, v -> k.split(':')[0].toInteger() > cfg.pruneMinTokens }
+        }
+
+        mainLengthSelector = new WeightedSelector(rawLengthStats)
+
+        rawLengthStats.each { k, v ->
             def parts = k.split(':'); lengthToStartTypeSel.computeIfAbsent(parts[0], {[:]}).put(parts[1], v)
         }
         lengthToStartTypeSel.each { k, v -> lengthToStartTypeSel[k] = new WeightedSelector(v) }
+
         def build = { src, dest -> src.each { k1, inner -> dest[k1] = [:]; inner.each { k2, map -> dest[k1][k2] = new WeightedSelector(map) } } }
         build(json.startTokens, startSel); build(json.innerTokens, innerSel); build(json.lastTokens, lastSel)
         build(json.bigramStart, bigramStartSel); build(json.bigramInner, bigramInnerSel); build(json.bigramLast, bigramLastSel)
@@ -626,7 +757,9 @@ class Generator {
             else len = Globals.RND.nextInt(5) + 8
             seg.wordLengths << len
         } else if (t == "PAUSE") {
-            seg.children << new Segment(type: 'PAUSE', terminator: v, childInsertPosition: seg.wordLengths.size())
+            // Handle both actual PAUSE and HYPHEN types from the Markov stream
+            String childType = (v == '-') ? 'HYPHEN' : 'PAUSE'
+            seg.children << new Segment(type: childType, terminator: v, childInsertPosition: seg.wordLengths.size())
         } else if (t == "SEGMENT") {
             if (depth < 4) {
                 Segment child = generateStructure(v, depth + 1)
@@ -662,23 +795,44 @@ class Generator {
         return tokens.join('')
     }
 
-    // Formatting helper for Marking Mode
     String formatMarkedWord(String w, int startMode, int actualMode, boolean forced) {
         if (forced) return "[${w}]"
-
         if (startMode == 3) {
             if (actualMode == 2) return "<${w}>"
             if (actualMode == 1) return "{${w}}"
         } else if (startMode == 2) {
             if (actualMode == 1) return "{${w}}"
         }
-        return w // No mark implies success at requested level
+        return w
+    }
+
+    String generateAndProcessWord(int len, Config cfg, Map stats) {
+        int startMode = cfg.ngramMode
+        int currentMode = startMode
+        String w = generateWord(len, currentMode)
+        boolean forced = false
+
+        if (cfg.uniqueMode && loadedVocabulary) {
+            int retries = 0
+            while (loadedVocabulary.contains(w)) {
+                stats.filteredCount++
+                retries++
+                if (retries >= 20) { if (startMode > 2) currentMode = 2 }
+                if (retries >= 40) { if (startMode > 1) currentMode = 1 }
+                if (retries >= 60) { stats.forcedCount++; forced = true; break }
+                w = generateWord(len, currentMode)
+            }
+        }
+
+        if (cfg.markingMode) {
+            return formatMarkedWord(w, startMode, currentMode, forced)
+        }
+        return w
     }
 
     String renderSegment(Segment seg, Config cfg, Map stats) {
         def sb = new StringBuilder()
 
-        // --- OPENERS ---
         if (seg.type == 'QUOTE') sb.append('"')
         else if (seg.type == 'SQUOTE') sb.append("'")
         else if (seg.type == 'PAREN') sb.append("(")
@@ -693,6 +847,9 @@ class Generator {
                 if (child.type == 'PAUSE') {
                     if (sb.length() > 0 && sb.charAt(sb.length() - 1) == ' ') sb.setLength(sb.length() - 1)
                     sb.append(child.terminator).append(' ')
+                } else if (child.type == 'HYPHEN') {
+                    if (sb.length() > 0 && sb.charAt(sb.length() - 1) == ' ') sb.setLength(sb.length() - 1)
+                    sb.append('-')
                 } else {
                     def out = renderSegment(child, cfg, stats)
                     if (out) sb.append(out).append(' ')
@@ -700,53 +857,14 @@ class Generator {
                 childIdx++
             }
 
-            // GENERATION & BACKOFF LOGIC
-            int startMode = cfg.ngramMode
-            int currentMode = startMode
-            String w = generateWord(len, currentMode)
-            boolean forced = false
-
-            if (cfg.uniqueMode && loadedVocabulary) {
-                int retries = 0
-                while (loadedVocabulary.contains(w)) {
-                    stats.filteredCount++
-                    retries++
-                    // Backoff logic
-                    if (retries >= 20) {
-                        if (startMode > 2) currentMode = 2
-                    }
-                    if (retries >= 40) {
-                        if (startMode > 1) currentMode = 1
-                    }
-                    if (retries >= 60) {
-                        stats.forcedCount++; forced = true; break
-                    }
-                    w = generateWord(len, currentMode)
-                }
-            }
-
-            // Apply Marking if enabled
-            if (cfg.markingMode) {
-                w = formatMarkedWord(w, startMode, currentMode, forced)
-            } else if (forced) {
-                // If not marking mode, we usually output plain, but forced is technically an error/failure of uniqueness
-                // Original behavior was usually to output [word] for forced only?
-                // Previous logic always marked forced as [word]. Let's maintain that implied standard or use marking logic.
-                // Reverting to standard output: just the word, unless marking mode is ON.
-                // Wait, previous version did: sb.append(forced ? "[${w}]" : w)
-                // So I will keep that default behavior if marking is OFF.
-                w = "[${w}]"
-            }
-
-            // Capitalize first word of Quote or Sentence (ignore markers for cap check)
+            String w = generateAndProcessWord(len, cfg, stats)
             if (i == 0 && (seg.type == 'SENTENCE' || seg.type == 'QUOTE')) w = Utils.smartCaps(w)
-
             sb.append(w).append(' ')
         }
 
         while (childIdx < sortedChildren.size()) {
             def child = sortedChildren[childIdx]
-            if (child.type != 'PAUSE') {
+            if (child.type != 'PAUSE' && child.type != 'HYPHEN') {
                 def out = renderSegment(child, cfg, stats)
                 if (out) sb.append(out).append(' ')
             }
@@ -755,7 +873,6 @@ class Generator {
 
         if (sb.length() > 0 && sb.charAt(sb.length() - 1) == ' ') sb.setLength(sb.length() - 1)
 
-        // --- CLOSERS & TERMINATORS ---
         if (seg.type == 'QUOTE') {
             if (seg.terminator) sb.append(seg.terminator)
             sb.append('"')
@@ -797,17 +914,26 @@ class Generator {
 
                 String output = renderSegment(root, cfg, stats)
                 output = Utils.smartCaps(output)
-                outStream.println(output)
+
+                if (cfg.lineOutput) outStream.println(output)
+                else outStream.print(output + " ")
+
                 generatedCount++
             } else {
                 def fused = mainLengthSelector.select(Globals.RND)
                 if (!fused) break
                 def targetLen = fused.split(':')[0].toInteger()
-                String w = generateWord(targetLen, cfg.ngramMode)
-                outStream.println(w); generatedCount++
+
+                String w = generateAndProcessWord(targetLen, cfg, stats)
+
+                if (cfg.lineOutput) outStream.println(w)
+                else outStream.print(w + " ")
+
+                generatedCount++
             }
         }
         if (cfg.f_File) outStream.close()
+        println ""
         println "=" * 60
         if (cfg.uniqueMode) {
             println "🔒 Filtered ${stats.filteredCount} duplicates."
