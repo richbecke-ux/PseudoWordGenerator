@@ -1,0 +1,2558 @@
+{
+    "markovChain": {
+        "DASH|START|START|START": {
+            "WORD:SHORT": 64,
+            "WORD:MED": 9
+        },
+        "DASH|START|START|WORD:SHORT": {
+            "WORD:SHORT": 47,
+            "WORD:MED": 12,
+            "PAUSE:,": 3,
+            "WORD:LONG": 2
+        },
+        "DASH|START|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 26,
+            "WORD:MED": 18,
+            "WORD:LONG": 2,
+            "END": 1
+        },
+        "DASH|WORD:SHORT|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 42,
+            "WORD:SHORT": 73,
+            "END": 15,
+            "WORD:LONG": 3,
+            "PAUSE:,": 4
+        },
+        "DASH|WORD:SHORT|WORD:SHORT|WORD:MED": {
+            "WORD:MED": 23,
+            "WORD:SHORT": 39,
+            "END": 11,
+            "PAUSE:,": 2,
+            "PAUSE:-": 1,
+            "WORD:LONG": 1,
+            "PAUSE:;": 1,
+            "SEGMENT:SQUOTE": 1
+        },
+        "DASH|WORD:SHORT|WORD:MED|WORD:MED": {
+            "END": 6,
+            "WORD:SHORT": 15,
+            "WORD:MED": 8,
+            "WORD:LONG": 1,
+            "PAUSE:,": 2
+        },
+        "SENTENCE|START|START|START": {
+            "WORD:SHORT": 106,
+            "SEGMENT:PAREN": 1,
+            "SEGMENT:DASH": 2,
+            "SEGMENT:QUOTE": 44,
+            "WORD:MED": 8,
+            "WORD:LONG": 1
+        },
+        "SENTENCE|START|START|WORD:SHORT": {
+            "WORD:SHORT": 56,
+            "END": 1,
+            "WORD:MED": 37,
+            "WORD:LONG": 3,
+            "SEGMENT:DASH": 4,
+            "PAUSE:,": 5
+        },
+        "SENTENCE|START|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 19,
+            "WORD:SHORT": 28,
+            "SEGMENT:DASH": 2,
+            "PAUSE:,": 4,
+            "END": 2,
+            "WORD:LONG": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 89,
+            "WORD:MED": 41,
+            "SEGMENT:DASH": 7,
+            "PAUSE:,": 17,
+            "END": 18,
+            "PAUSE:;": 2,
+            "PAUSE:-": 3,
+            "WORD:LONG": 5,
+            "SEGMENT:QUOTE": 4,
+            "PAUSE::": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 89,
+            "WORD:MED": 53,
+            "SEGMENT:DASH": 5,
+            "PAUSE:,": 8,
+            "END": 5,
+            "PAUSE::": 1,
+            "WORD:LONG": 5,
+            "SEGMENT:PAREN": 1,
+            "PAUSE:-": 2
+        },
+        "SENTENCE|WORD:MED|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 55,
+            "WORD:SHORT": 66,
+            "PAUSE:,": 4,
+            "WORD:LONG": 10,
+            "PAUSE:-": 2,
+            "END": 3,
+            "PAUSE:;": 1,
+            "SEGMENT:DASH": 1,
+            "SEGMENT:QUOTE": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 50,
+            "SEGMENT:QUOTE": 3,
+            "WORD:MED": 11,
+            "END": 12,
+            "PAUSE:,": 5,
+            "PAUSE:;": 3,
+            "SEGMENT:DASH": 2,
+            "WORD:LONG": 4,
+            "PAUSE:-": 1,
+            "PAUSE::": 1
+        },
+        "SENTENCE|WORD:MED|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 36,
+            "WORD:MED": 18,
+            "PAUSE:,": 8,
+            "SEGMENT:DASH": 2,
+            "WORD:LONG": 1,
+            "END": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:MED|SEGMENT:DASH": {
+            "WORD:SHORT": 1,
+            "END": 10
+        },
+        "SENTENCE|WORD:MED|SEGMENT:DASH|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|SEGMENT:DASH|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 3
+        },
+        "SENTENCE|WORD:SHORT|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 176,
+            "WORD:MED": 92,
+            "PAUSE:,": 17,
+            "SEGMENT:QUOTE": 3,
+            "WORD:LONG": 6,
+            "SEGMENT:DASH": 7,
+            "END": 8,
+            "PAUSE:-": 5,
+            "PAUSE:;": 1,
+            "PAUSE::": 2
+        },
+        "SENTENCE|WORD:SHORT|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 19,
+            "PAUSE:,": 2,
+            "WORD:MED": 6
+        },
+        "SENTENCE|WORD:SHORT|PAUSE:,|WORD:SHORT": {
+            "WORD:SHORT": 30,
+            "WORD:MED": 13,
+            "PAUSE:,": 2,
+            "SEGMENT:QUOTE": 1
+        },
+        "SENTENCE|PAUSE:,|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 34,
+            "WORD:MED": 12,
+            "PAUSE:,": 2,
+            "WORD:LONG": 2,
+            "PAUSE:-": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:MED|PAUSE:,": {
+            "WORD:SHORT": 19,
+            "WORD:LONG": 1,
+            "WORD:MED": 10
+        },
+        "SENTENCE|WORD:MED|PAUSE:,|WORD:SHORT": {
+            "WORD:MED": 13,
+            "WORD:SHORT": 15,
+            "SEGMENT:DASH": 2,
+            "WORD:LONG": 2
+        },
+        "SENTENCE|PAUSE:,|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 16,
+            "WORD:MED": 7,
+            "PAUSE:,": 3,
+            "PAUSE:-": 2
+        },
+        "SENTENCE|WORD:MED|WORD:SHORT|WORD:MED": {
+            "PAUSE:,": 5,
+            "END": 6,
+            "WORD:SHORT": 36,
+            "WORD:MED": 23,
+            "PAUSE:-": 2,
+            "WORD:LONG": 2,
+            "PAUSE:;": 1,
+            "SEGMENT:DASH": 4
+        },
+        "SENTENCE|WORD:MED|PAUSE:,|WORD:LONG": {
+            "WORD:MED": 1
+        },
+        "SENTENCE|PAUSE:,|WORD:LONG|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:LONG|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 3,
+            "WORD:MED": 4
+        },
+        "PAREN|START|START|START": {
+            "WORD:SHORT": 3
+        },
+        "PAREN|START|START|WORD:SHORT": {
+            "WORD:SHORT": 2,
+            "WORD:MED": 1
+        },
+        "PAREN|START|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 1
+        },
+        "PAREN|WORD:SHORT|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 2
+        },
+        "PAREN|WORD:SHORT|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 2,
+            "WORD:MED": 2
+        },
+        "PAREN|WORD:MED|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 1,
+            "END": 1
+        },
+        "PAREN|WORD:SHORT|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 2,
+            "END": 1
+        },
+        "PAREN|WORD:MED|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 1,
+            "END": 1
+        },
+        "SENTENCE|START|START|SEGMENT:PAREN": {
+            "END": 1
+        },
+        "QUOTE|START|START|START": {
+            "WORD:SHORT": 51,
+            "WORD:MED": 16,
+            "WORD:LONG": 1
+        },
+        "QUOTE|START|START|WORD:SHORT": {
+            "WORD:SHORT": 27,
+            "WORD:MED": 8,
+            "PAUSE:-": 1,
+            "PAUSE:,": 10,
+            "WORD:LONG": 2,
+            "SEGMENT:DASH": 3
+        },
+        "QUOTE|START|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 16,
+            "PAUSE:,": 1,
+            "WORD:MED": 8,
+            "WORD:LONG": 1,
+            "SEGMENT:DASH": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 143,
+            "WORD:MED": 59,
+            "PAUSE:,": 11,
+            "END": 11,
+            "WORD:LONG": 2,
+            "SEGMENT:DASH": 5,
+            "PAUSE::": 1,
+            "PAUSE:-": 2
+        },
+        "QUOTE|WORD:SHORT|WORD:SHORT|WORD:MED": {
+            "END": 10,
+            "WORD:SHORT": 59,
+            "WORD:LONG": 1,
+            "WORD:MED": 16,
+            "PAUSE:,": 11,
+            "PAUSE:-": 3,
+            "PAUSE:;": 1,
+            "SEGMENT:DASH": 1
+        },
+        "DASH|WORD:MED|WORD:MED|WORD:SHORT": {
+            "END": 1,
+            "WORD:MED": 8,
+            "WORD:SHORT": 15
+        },
+        "SENTENCE|START|START|SEGMENT:DASH": {
+            "END": 2
+        },
+        "SENTENCE|WORD:MED|WORD:SHORT|SEGMENT:DASH": {
+            "WORD:SHORT": 2,
+            "END": 6
+        },
+        "SENTENCE|WORD:SHORT|SEGMENT:DASH|WORD:SHORT": {
+            "WORD:LONG": 1,
+            "SEGMENT:DASH": 1,
+            "WORD:SHORT": 1,
+            "WORD:MED": 2
+        },
+        "SENTENCE|SEGMENT:DASH|WORD:SHORT|WORD:LONG": {
+            "WORD:LONG": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:LONG|WORD:LONG": {
+            "END": 1,
+            "WORD:SHORT": 1,
+            "PAUSE:;": 1
+        },
+        "QUOTE|START|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 4,
+            "WORD:MED": 2,
+            "PAUSE:-": 1,
+            "SEGMENT:DASH": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 58,
+            "WORD:MED": 22,
+            "WORD:LONG": 1,
+            "SEGMENT:DASH": 4,
+            "END": 3,
+            "PAUSE:-": 1,
+            "PAUSE:,": 4
+        },
+        "QUOTE|WORD:MED|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 48,
+            "WORD:MED": 22,
+            "PAUSE:;": 1,
+            "END": 1,
+            "PAUSE:,": 5,
+            "WORD:LONG": 1,
+            "SEGMENT:DASH": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:SHORT|PAUSE:;": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:SHORT|PAUSE:;|WORD:SHORT": {
+            "WORD:SHORT": 2
+        },
+        "QUOTE|PAUSE:;|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 3,
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:SHORT|PAUSE:,": {
+            "WORD:MED": 3,
+            "WORD:SHORT": 10,
+            "END": 4,
+            "PAUSE:,": 1
+        },
+        "QUOTE|WORD:SHORT|PAUSE:,|WORD:MED": {
+            "SEGMENT:DASH": 1,
+            "WORD:SHORT": 7,
+            "END": 1
+        },
+        "QUOTE|PAUSE:,|WORD:MED|SEGMENT:DASH": {
+            "END": 1
+        },
+        "SENTENCE|START|START|SEGMENT:QUOTE": {
+            "WORD:SHORT": 10,
+            "END": 31,
+            "WORD:MED": 3
+        },
+        "SENTENCE|START|SEGMENT:QUOTE|WORD:SHORT": {
+            "PAUSE:,": 3,
+            "WORD:SHORT": 2,
+            "WORD:MED": 3,
+            "END": 2
+        },
+        "SENTENCE|SEGMENT:QUOTE|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 4
+        },
+        "QUOTE|START|WORD:SHORT|PAUSE:-": {
+            "END": 1
+        },
+        "QUOTE|WORD:MED|WORD:SHORT|WORD:MED": {
+            "WORD:MED": 4,
+            "WORD:SHORT": 16,
+            "PAUSE:-": 2,
+            "SEGMENT:DASH": 3,
+            "PAUSE:,": 5,
+            "PAUSE:;": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:MED|WORD:MED": {
+            "END": 3,
+            "WORD:MED": 1,
+            "PAUSE:;": 1,
+            "WORD:SHORT": 16,
+            "SEGMENT:DASH": 2,
+            "PAUSE:,": 2
+        },
+        "SENTENCE|WORD:MED|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 14,
+            "WORD:MED": 1,
+            "WORD:LONG": 1
+        },
+        "SENTENCE|WORD:MED|WORD:MED|SEGMENT:QUOTE": {
+            "WORD:SHORT": 2,
+            "END": 2
+        },
+        "SENTENCE|WORD:MED|SEGMENT:QUOTE|WORD:SHORT": {
+            "PAUSE:,": 1,
+            "SEGMENT:DASH": 1,
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:SHORT|SEGMENT:QUOTE": {
+            "END": 3,
+            "WORD:SHORT": 1
+        },
+        "DASH|START|START|WORD:MED": {
+            "WORD:SHORT": 5,
+            "PAUSE:,": 1,
+            "WORD:MED": 3
+        },
+        "DASH|START|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 1,
+            "WORD:MED": 2,
+            "PAUSE:,": 1,
+            "END": 1
+        },
+        "DASH|WORD:MED|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 27,
+            "WORD:MED": 16,
+            "END": 7,
+            "PAUSE:,": 1
+        },
+        "DASH|WORD:SHORT|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 32,
+            "SEGMENT:PAREN": 1,
+            "WORD:MED": 23,
+            "SEGMENT:QUOTE": 2,
+            "END": 6,
+            "PAUSE:,": 3,
+            "WORD:LONG": 1
+        },
+        "DASH|WORD:SHORT|WORD:SHORT|WORD:LONG": {
+            "END": 1,
+            "WORD:SHORT": 2,
+            "WORD:MED": 3,
+            "WORD:LONG": 1
+        },
+        "SENTENCE|START|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 20,
+            "PAUSE:,": 4,
+            "WORD:MED": 13
+        },
+        "SENTENCE|START|START|WORD:MED": {
+            "WORD:SHORT": 5,
+            "END": 1,
+            "WORD:MED": 2
+        },
+        "SENTENCE|START|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 4,
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:MED|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 7,
+            "PAUSE:,": 3,
+            "SEGMENT:DASH": 1,
+            "WORD:MED": 1,
+            "PAUSE::": 1
+        },
+        "SENTENCE|START|START|WORD:LONG": {
+            "WORD:MED": 1
+        },
+        "SENTENCE|START|WORD:LONG|WORD:MED": {
+            "END": 1
+        },
+        "QUOTE|START|START|WORD:MED": {
+            "END": 6,
+            "WORD:SHORT": 5,
+            "WORD:MED": 2,
+            "PAUSE:,": 2,
+            "PAUSE::": 1
+        },
+        "DASH|WORD:MED|WORD:MED|WORD:MED": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 4,
+            "PAUSE:,": 2,
+            "PAUSE:-": 2,
+            "END": 1
+        },
+        "DASH|WORD:MED|WORD:SHORT|WORD:MED": {
+            "WORD:LONG": 2,
+            "WORD:SHORT": 17,
+            "END": 8,
+            "WORD:MED": 7,
+            "PAUSE:,": 1,
+            "PAUSE:;": 1
+        },
+        "DASH|WORD:SHORT|WORD:MED|WORD:LONG": {
+            "WORD:SHORT": 2,
+            "END": 1
+        },
+        "DASH|WORD:MED|WORD:LONG|WORD:SHORT": {
+            "WORD:SHORT": 2,
+            "WORD:MED": 1
+        },
+        "DASH|WORD:LONG|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 2,
+            "WORD:SHORT": 2,
+            "PAUSE:,": 1,
+            "WORD:LONG": 1
+        },
+        "DASH|WORD:MED|WORD:SHORT|SEGMENT:PAREN": {
+            "WORD:SHORT": 1
+        },
+        "DASH|WORD:SHORT|SEGMENT:PAREN|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "DASH|SEGMENT:PAREN|WORD:SHORT|WORD:MED": {
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:MED|PAUSE:,|WORD:MED": {
+            "WORD:SHORT": 8,
+            "WORD:MED": 3,
+            "END": 1,
+            "PAUSE:,": 4
+        },
+        "SENTENCE|PAUSE:,|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 7,
+            "SEGMENT:QUOTE": 1,
+            "WORD:MED": 3,
+            "WORD:LONG": 1,
+            "SEGMENT:DASH": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:SHORT|WORD:LONG": {
+            "WORD:SHORT": 9,
+            "WORD:MED": 7,
+            "SEGMENT:DASH": 1,
+            "END": 2,
+            "WORD:LONG": 2,
+            "SEGMENT:QUOTE": 1,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:LONG|WORD:SHORT": {
+            "WORD:MED": 5,
+            "WORD:LONG": 2,
+            "WORD:SHORT": 6,
+            "END": 2,
+            "SEGMENT:QUOTE": 1,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|WORD:LONG|WORD:SHORT|WORD:MED": {
+            "WORD:MED": 4,
+            "WORD:LONG": 1,
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:MED|WORD:MED|PAUSE:,": {
+            "PAUSE:,": 1,
+            "WORD:SHORT": 5,
+            "WORD:MED": 2
+        },
+        "SENTENCE|WORD:MED|PAUSE:,|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|PAUSE:,|PAUSE:,|WORD:SHORT": {
+            "WORD:SHORT": 2,
+            "WORD:MED": 2
+        },
+        "SENTENCE|SEGMENT:QUOTE|WORD:SHORT|SEGMENT:DASH": {
+            "END": 1
+        },
+        "DASH|START|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 8,
+            "END": 3,
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:SHORT|SEGMENT:DASH": {
+            "WORD:MED": 2,
+            "WORD:SHORT": 2,
+            "END": 6
+        },
+        "SENTENCE|WORD:SHORT|SEGMENT:DASH|WORD:MED": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 1,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|SEGMENT:DASH|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:SHORT|PAUSE:,|PAUSE:,": {
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|WORD:MED|WORD:SHORT|SEGMENT:QUOTE": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:SHORT|SEGMENT:QUOTE|WORD:SHORT": {
+            "END": 1,
+            "WORD:MED": 1
+        },
+        "SENTENCE|PAUSE:,|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 4,
+            "WORD:MED": 1
+        },
+        "QUOTE|START|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 3,
+            "WORD:MED": 1,
+            "END": 1
+        },
+        "DASH|WORD:MED|WORD:SHORT|SEGMENT:QUOTE": {
+            "WORD:SHORT": 1,
+            "END": 1
+        },
+        "DASH|WORD:SHORT|SEGMENT:QUOTE|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "DASH|SEGMENT:QUOTE|WORD:SHORT|WORD:MED": {
+            "END": 1
+        },
+        "SENTENCE|SEGMENT:DASH|WORD:SHORT|SEGMENT:DASH": {
+            "END": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:MED|PAUSE:;": {
+            "WORD:SHORT": 3,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|WORD:MED|PAUSE:;|WORD:SHORT": {
+            "WORD:SHORT": 3,
+            "WORD:MED": 2
+        },
+        "SENTENCE|PAUSE:;|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 2,
+            "WORD:LONG": 1,
+            "WORD:SHORT": 3
+        },
+        "SENTENCE|PAUSE:,|WORD:SHORT|SEGMENT:DASH": {
+            "END": 2
+        },
+        "SENTENCE|WORD:SHORT|WORD:MED|PAUSE:-": {
+            "WORD:SHORT": 1,
+            "WORD:MED": 3,
+            "END": 1,
+            "PAUSE:,": 1,
+            "SEGMENT:DASH": 1
+        },
+        "SENTENCE|WORD:MED|PAUSE:-|WORD:SHORT": {
+            "WORD:MED": 1,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|PAUSE:-|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "DASH|WORD:SHORT|WORD:LONG|WORD:SHORT": {
+            "WORD:SHORT": 3,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|START|WORD:SHORT|WORD:LONG": {
+            "WORD:MED": 2,
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:LONG|WORD:MED": {
+            "WORD:SHORT": 5,
+            "WORD:MED": 5,
+            "PAUSE::": 1,
+            "SEGMENT:DASH": 1,
+            "PAUSE:,": 2,
+            "END": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:MED|WORD:LONG": {
+            "WORD:LONG": 1,
+            "END": 4,
+            "WORD:SHORT": 2,
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:MED|WORD:LONG|WORD:LONG": {
+            "PAUSE:;": 2
+        },
+        "SENTENCE|WORD:LONG|WORD:LONG|PAUSE:;": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|WORD:LONG|PAUSE:;|WORD:MED": {
+            "PAUSE:,": 1
+        },
+        "SENTENCE|PAUSE:;|WORD:MED|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:LONG|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 2,
+            "PAUSE:-": 1,
+            "END": 2
+        },
+        "SENTENCE|WORD:SHORT|WORD:SHORT|PAUSE:-": {
+            "PAUSE:;": 1,
+            "WORD:SHORT": 2,
+            "WORD:MED": 3,
+            "END": 1,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|WORD:SHORT|PAUSE:-|PAUSE:;": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|PAUSE:-|PAUSE:;|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "SENTENCE|PAUSE:;|WORD:SHORT|WORD:MED": {
+            "WORD:MED": 2,
+            "PAUSE:,": 1,
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:SHORT|PAUSE:,|WORD:MED": {
+            "WORD:SHORT": 3,
+            "WORD:LONG": 1,
+            "PAUSE:,": 2,
+            "WORD:MED": 2
+        },
+        "QUOTE|START|START|WORD:LONG": {
+            "END": 1
+        },
+        "SENTENCE|WORD:MED|WORD:SHORT|PAUSE::": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:SHORT|PAUSE::|WORD:SHORT": {
+            "WORD:SHORT": 2,
+            "WORD:MED": 1
+        },
+        "SENTENCE|PAUSE::|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 3
+        },
+        "SENTENCE|WORD:SHORT|WORD:LONG|SEGMENT:DASH": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:LONG|SEGMENT:DASH|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:MED|WORD:SHORT|WORD:LONG": {
+            "WORD:MED": 3,
+            "WORD:SHORT": 5
+        },
+        "SENTENCE|WORD:LONG|WORD:MED|PAUSE::": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:MED|PAUSE::|WORD:SHORT": {
+            "WORD:MED": 1,
+            "PAUSE:-": 1,
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|PAUSE::|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 2,
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:SHORT|PAUSE:-|WORD:SHORT": {
+            "WORD:SHORT": 1,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|PAUSE:-|WORD:SHORT|WORD:SHORT": {
+            "WORD:LONG": 1
+        },
+        "QUOTE|START|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 2
+        },
+        "QUOTE|WORD:MED|WORD:MED|WORD:SHORT": {
+            "WORD:LONG": 1,
+            "WORD:SHORT": 11,
+            "WORD:MED": 6,
+            "END": 1,
+            "PAUSE:,": 1
+        },
+        "QUOTE|WORD:MED|WORD:SHORT|WORD:LONG": {
+            "END": 1,
+            "PAUSE:,": 1,
+            "PAUSE:-": 1
+        },
+        "PAREN|START|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:MED|WORD:SHORT|SEGMENT:PAREN": {
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:SHORT|SEGMENT:PAREN|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|SEGMENT:PAREN|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:SHORT|PAUSE:;": {
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|WORD:SHORT|PAUSE:;|WORD:SHORT": {
+            "WORD:SHORT": 1,
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:LONG|WORD:LONG|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:LONG|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 5,
+            "WORD:SHORT": 3,
+            "WORD:LONG": 2
+        },
+        "SENTENCE|WORD:LONG|WORD:SHORT|WORD:LONG": {
+            "WORD:SHORT": 1,
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:MED|WORD:SHORT|PAUSE:-": {
+            "PAUSE:,": 1,
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:SHORT|PAUSE:-|PAUSE:,": {
+            "WORD:MED": 2,
+            "WORD:SHORT": 1,
+            "WORD:LONG": 1
+        },
+        "SENTENCE|PAUSE:-|PAUSE:,|WORD:MED": {
+            "WORD:SHORT": 2,
+            "PAUSE:-": 1
+        },
+        "SENTENCE|PAUSE:,|WORD:MED|WORD:LONG": {
+            "WORD:LONG": 1
+        },
+        "SENTENCE|WORD:LONG|PAUSE:;|WORD:SHORT": {
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|WORD:MED|PAUSE:-|WORD:MED": {
+            "WORD:SHORT": 2,
+            "WORD:MED": 1
+        },
+        "SENTENCE|PAUSE:-|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 1,
+            "WORD:LONG": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:LONG|PAUSE:,": {
+            "END": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:MED|WORD:LONG": {
+            "WORD:SHORT": 1,
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:MED|WORD:LONG|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:LONG|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|SEGMENT:QUOTE|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 1,
+            "WORD:MED": 2
+        },
+        "SENTENCE|WORD:MED|WORD:MED|PAUSE:-": {
+            "PAUSE:,": 1,
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:MED|PAUSE:-|PAUSE:,": {
+            "PAUSE:,": 1,
+            "WORD:MED": 1,
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|PAUSE:-|PAUSE:,|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:MED|WORD:MED|PAUSE:;": {
+            "WORD:SHORT": 2,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:LONG|SEGMENT:QUOTE": {
+            "END": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:SHORT|PAUSE::": {
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|PAUSE:,|WORD:MED|PAUSE:,": {
+            "WORD:MED": 3,
+            "WORD:SHORT": 3
+        },
+        "SENTENCE|WORD:MED|WORD:MED|SEGMENT:DASH": {
+            "END": 3
+        },
+        "DASH|START|WORD:SHORT|PAUSE:,": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 2
+        },
+        "DASH|WORD:SHORT|PAUSE:,|WORD:MED": {
+            "PAUSE:,": 2,
+            "WORD:SHORT": 3,
+            "END": 1
+        },
+        "DASH|PAUSE:,|WORD:MED|PAUSE:,": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 1
+        },
+        "DASH|WORD:MED|PAUSE:,|WORD:MED": {
+            "WORD:MED": 2,
+            "WORD:SHORT": 3
+        },
+        "DASH|PAUSE:,|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 1,
+            "WORD:MED": 1
+        },
+        "SENTENCE|START|WORD:SHORT|SEGMENT:DASH": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 1,
+            "END": 2
+        },
+        "SENTENCE|SEGMENT:DASH|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "DASH|WORD:MED|WORD:MED|PAUSE:,": {
+            "END": 1,
+            "WORD:SHORT": 3,
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:SHORT|PAUSE:,|WORD:SHORT": {
+            "WORD:MED": 10,
+            "PAUSE:;": 1,
+            "WORD:SHORT": 13,
+            "SEGMENT:DASH": 1
+        },
+        "QUOTE|PAUSE:,|WORD:SHORT|WORD:MED": {
+            "WORD:MED": 2,
+            "WORD:SHORT": 9,
+            "SEGMENT:DASH": 1,
+            "PAUSE:;": 1,
+            "WORD:LONG": 1,
+            "PAUSE:,": 2
+        },
+        "QUOTE|WORD:MED|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:MED|WORD:SHORT|SEGMENT:DASH": {
+            "END": 1,
+            "WORD:SHORT": 2,
+            "WORD:MED": 1
+        },
+        "DASH|WORD:SHORT|WORD:MED|PAUSE:,": {
+            "WORD:SHORT": 2,
+            "WORD:LONG": 1,
+            "WORD:MED": 3
+        },
+        "DASH|WORD:MED|PAUSE:,|WORD:SHORT": {
+            "WORD:SHORT": 4,
+            "WORD:MED": 3,
+            "PAUSE:,": 1
+        },
+        "DASH|PAUSE:,|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 7,
+            "WORD:LONG": 1,
+            "PAUSE:,": 1,
+            "END": 1,
+            "WORD:MED": 1
+        },
+        "DASH|WORD:SHORT|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 4,
+            "WORD:MED": 3
+        },
+        "DASH|WORD:SHORT|PAUSE:,|WORD:SHORT": {
+            "WORD:SHORT": 5,
+            "WORD:LONG": 1,
+            "WORD:MED": 3,
+            "END": 2
+        },
+        "SENTENCE|START|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 1,
+            "END": 1
+        },
+        "SENTENCE|PAUSE:,|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 1,
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:MED|WORD:MED|WORD:LONG": {
+            "END": 2,
+            "PAUSE::": 1,
+            "WORD:SHORT": 1
+        },
+        "DASH|WORD:MED|WORD:MED|PAUSE:-": {
+            "WORD:SHORT": 1,
+            "PAUSE:,": 1
+        },
+        "DASH|WORD:MED|PAUSE:-|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "DASH|PAUSE:-|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:SHORT|PAUSE:-|WORD:MED": {
+            "END": 3,
+            "PAUSE:,": 1
+        },
+        "QUOTE|START|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 6,
+            "WORD:MED": 4
+        },
+        "QUOTE|PAUSE:,|WORD:SHORT|PAUSE:;": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:MED|PAUSE:,": {
+            "END": 3,
+            "WORD:SHORT": 14,
+            "WORD:MED": 1,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|SEGMENT:QUOTE|WORD:SHORT|WORD:MED": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 1,
+            "PAUSE:;": 1,
+            "END": 1
+        },
+        "SENTENCE|PAUSE:-|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|PAUSE:-|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:SHORT|WORD:LONG": {
+            "WORD:MED": 3,
+            "WORD:SHORT": 2
+        },
+        "QUOTE|WORD:SHORT|WORD:LONG|WORD:MED": {
+            "PAUSE:,": 1,
+            "SEGMENT:DASH": 1,
+            "END": 1
+        },
+        "QUOTE|WORD:LONG|WORD:MED|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:MED|PAUSE:,|WORD:SHORT": {
+            "WORD:SHORT": 8,
+            "END": 1,
+            "PAUSE:,": 3,
+            "WORD:MED": 5
+        },
+        "QUOTE|PAUSE:,|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 16,
+            "SEGMENT:DASH": 1,
+            "PAUSE:,": 1,
+            "WORD:MED": 3,
+            "WORD:LONG": 1
+        },
+        "QUOTE|WORD:MED|WORD:MED|PAUSE:;": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:MED|PAUSE:;|WORD:SHORT": {
+            "WORD:SHORT": 2,
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:SHORT|SEGMENT:DASH|WORD:SHORT": {
+            "WORD:SHORT": 6,
+            "WORD:MED": 2
+        },
+        "QUOTE|SEGMENT:DASH|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 3,
+            "WORD:SHORT": 6
+        },
+        "SENTENCE|WORD:LONG|WORD:MED|SEGMENT:DASH": {
+            "END": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:MED|SEGMENT:QUOTE": {
+            "END": 3,
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:MED|WORD:LONG|WORD:SHORT": {
+            "WORD:SHORT": 2,
+            "WORD:MED": 1
+        },
+        "QUOTE|PAUSE:,|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 7,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|WORD:LONG|WORD:MED|PAUSE:,": {
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|PAUSE:,|WORD:SHORT|WORD:LONG": {
+            "WORD:MED": 2,
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:MED|PAUSE:-": {
+            "PAUSE:,": 1,
+            "SEGMENT:DASH": 1,
+            "WORD:SHORT": 3,
+            "END": 1
+        },
+        "QUOTE|WORD:MED|PAUSE:-|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|PAUSE:-|PAUSE:,|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|PAUSE:,|WORD:SHORT|SEGMENT:QUOTE": {
+            "END": 1
+        },
+        "SENTENCE|SEGMENT:DASH|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 2
+        },
+        "DASH|WORD:MED|PAUSE:-|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "DASH|PAUSE:-|PAUSE:,|WORD:SHORT": {
+            "WORD:LONG": 1
+        },
+        "DASH|PAUSE:,|WORD:SHORT|WORD:LONG": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 1
+        },
+        "DASH|WORD:SHORT|WORD:LONG|WORD:MED": {
+            "WORD:MED": 2,
+            "WORD:SHORT": 1,
+            "END": 1,
+            "PAUSE:,": 1
+        },
+        "DASH|WORD:LONG|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 1,
+            "END": 1
+        },
+        "DASH|WORD:LONG|WORD:MED|WORD:SHORT": {
+            "WORD:LONG": 1
+        },
+        "DASH|WORD:MED|WORD:SHORT|WORD:LONG": {
+            "PAUSE:,": 1,
+            "WORD:SHORT": 1
+        },
+        "DASH|WORD:SHORT|WORD:LONG|PAUSE:,": {
+            "WORD:SHORT": 2
+        },
+        "DASH|WORD:LONG|PAUSE:,|WORD:SHORT": {
+            "WORD:SHORT": 2
+        },
+        "DASH|WORD:LONG|WORD:SHORT|PAUSE:,": {
+            "WORD:MED": 1
+        },
+        "DASH|PAUSE:,|WORD:MED|WORD:SHORT": {
+            "WORD:MED": 2,
+            "WORD:SHORT": 3,
+            "PAUSE:,": 1
+        },
+        "DASH|WORD:MED|WORD:MED|WORD:LONG": {
+            "WORD:SHORT": 1
+        },
+        "DASH|WORD:LONG|WORD:SHORT|WORD:MED": {
+            "END": 1,
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:MED|PAUSE:;|PAUSE:,": {
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|PAUSE:;|PAUSE:,|WORD:SHORT": {
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|PAUSE:-|PAUSE:,|WORD:SHORT": {
+            "WORD:LONG": 1,
+            "PAUSE:-": 1,
+            "WORD:SHORT": 1
+        },
+        "DASH|START|WORD:MED|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "DASH|PAUSE:,|WORD:SHORT|WORD:MED": {
+            "PAUSE:,": 3,
+            "WORD:SHORT": 2,
+            "END": 1
+        },
+        "DASH|WORD:MED|PAUSE:,|WORD:LONG": {
+            "WORD:SHORT": 1
+        },
+        "DASH|PAUSE:,|WORD:LONG|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "QUOTE|START|WORD:MED|PAUSE:,": {
+            "END": 2
+        },
+        "DASH|START|WORD:SHORT|WORD:LONG": {
+            "PAUSE:,": 1,
+            "WORD:MED": 1
+        },
+        "DASH|WORD:SHORT|WORD:MED|PAUSE:-": {
+            "WORD:MED": 1
+        },
+        "DASH|WORD:MED|PAUSE:-|WORD:MED": {
+            "WORD:MED": 1
+        },
+        "DASH|PAUSE:-|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|PAUSE:,|WORD:SHORT|PAUSE:,": {
+            "END": 1,
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|START|SEGMENT:QUOTE|WORD:MED": {
+            "WORD:SHORT": 1,
+            "WORD:MED": 1,
+            "PAUSE:,": 1
+        },
+        "SENTENCE|SEGMENT:QUOTE|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|SEGMENT:QUOTE|WORD:MED|WORD:MED": {
+            "SEGMENT:QUOTE": 1
+        },
+        "SENTENCE|PAUSE:-|WORD:MED|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:SHORT|WORD:LONG|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:LONG|PAUSE:,|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|SEGMENT:QUOTE|WORD:MED|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:MED|WORD:MED|PAUSE::": {
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|PAUSE::|WORD:SHORT|PAUSE:-": {
+            "PAUSE:,": 1
+        },
+        "SENTENCE|PAUSE:,|WORD:MED|PAUSE:-": {
+            "PAUSE:,": 1
+        },
+        "SENTENCE|PAUSE:,|WORD:SHORT|PAUSE:-": {
+            "PAUSE:,": 1
+        },
+        "SENTENCE|PAUSE:-|PAUSE:,|WORD:LONG": {
+            "SEGMENT:DASH": 1
+        },
+        "SENTENCE|PAUSE:,|WORD:LONG|SEGMENT:DASH": {
+            "END": 1
+        },
+        "DASH|WORD:MED|WORD:SHORT|PAUSE:,": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 4
+        },
+        "QUOTE|START|WORD:SHORT|WORD:LONG": {
+            "WORD:SHORT": 2
+        },
+        "QUOTE|WORD:SHORT|WORD:LONG|WORD:SHORT": {
+            "WORD:SHORT": 3,
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:LONG|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 3,
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|SEGMENT:DASH|WORD:MED|PAUSE:,": {
+            "WORD:MED": 1
+        },
+        "SENTENCE|START|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 5
+        },
+        "SENTENCE|WORD:SHORT|WORD:MED|PAUSE::": {
+            "PAUSE:;": 1
+        },
+        "SENTENCE|WORD:MED|PAUSE::|PAUSE:;": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|PAUSE::|PAUSE:;|WORD:SHORT": {
+            "PAUSE:-": 1
+        },
+        "SENTENCE|PAUSE:;|WORD:SHORT|PAUSE:-": {
+            "PAUSE:-": 1
+        },
+        "SENTENCE|WORD:SHORT|PAUSE:-|PAUSE:-": {
+            "PAUSE:,": 1
+        },
+        "SENTENCE|PAUSE:-|PAUSE:-|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:MED|PAUSE:-|SEGMENT:DASH": {
+            "END": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:MED|SEGMENT:DASH": {
+            "END": 4,
+            "WORD:SHORT": 2
+        },
+        "SENTENCE|WORD:SHORT|PAUSE:,|WORD:LONG": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|PAUSE:,|WORD:LONG|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:MED|PAUSE:-|SEGMENT:DASH": {
+            "END": 1
+        },
+        "QUOTE|WORD:MED|WORD:MED|SEGMENT:DASH": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:MED|SEGMENT:DASH|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|SEGMENT:DASH|WORD:MED|WORD:SHORT": {
+            "PAUSE:,": 1,
+            "WORD:LONG": 1,
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:MED|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 6,
+            "WORD:MED": 2
+        },
+        "QUOTE|START|WORD:SHORT|SEGMENT:DASH": {
+            "WORD:SHORT": 2,
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:SHORT|SEGMENT:DASH": {
+            "WORD:SHORT": 3,
+            "END": 4,
+            "WORD:LONG": 1
+        },
+        "DASH|PAUSE:,|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:LONG|WORD:MED|SEGMENT:DASH": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:MED|SEGMENT:DASH|WORD:SHORT": {
+            "WORD:SHORT": 3,
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:LONG|WORD:SHORT|SEGMENT:QUOTE": {
+            "END": 1
+        },
+        "QUOTE|PAUSE:,|WORD:SHORT|SEGMENT:DASH": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:MED|PAUSE:-|WORD:SHORT": {
+            "WORD:SHORT": 2,
+            "PAUSE:,": 1
+        },
+        "QUOTE|PAUSE:-|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 1,
+            "END": 1,
+            "WORD:MED": 2
+        },
+        "DASH|START|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 2,
+            "PAUSE:,": 1
+        },
+        "QUOTE|WORD:SHORT|SEGMENT:DASH|WORD:MED": {
+            "WORD:SHORT": 2
+        },
+        "QUOTE|WORD:SHORT|WORD:LONG|PAUSE:-": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:LONG|PAUSE:-|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|SEGMENT:DASH|WORD:SHORT|WORD:MED": {
+            "WORD:MED": 1,
+            "WORD:SHORT": 2
+        },
+        "QUOTE|WORD:SHORT|WORD:MED|PAUSE:;": {
+            "WORD:SHORT": 2,
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:MED|PAUSE:;|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|PAUSE:;|WORD:MED|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "QUOTE|START|WORD:MED|PAUSE::": {
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:MED|PAUSE::|WORD:MED": {
+            "WORD:LONG": 1
+        },
+        "QUOTE|PAUSE::|WORD:MED|WORD:LONG": {
+            "SEGMENT:DASH": 1
+        },
+        "QUOTE|WORD:MED|WORD:LONG|SEGMENT:DASH": {
+            "END": 1
+        },
+        "DASH|WORD:LONG|WORD:MED|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:MED|WORD:SHORT|PAUSE:-": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:SHORT|PAUSE:-|WORD:SHORT": {
+            "WORD:SHORT": 1,
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:MED|WORD:LONG|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:LONG|WORD:MED|WORD:SHORT": {
+            "PAUSE:,": 1
+        },
+        "QUOTE|PAUSE:-|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:MED|PAUSE:,|WORD:MED": {
+            "PAUSE:,": 1,
+            "WORD:SHORT": 1
+        },
+        "QUOTE|PAUSE:,|WORD:MED|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:MED|WORD:LONG|PAUSE::": {
+            "WORD:SHORT": 1
+        },
+        "SENTENCE|WORD:LONG|PAUSE::|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:MED|WORD:LONG|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "DASH|WORD:SHORT|WORD:MED|PAUSE:;": {
+            "WORD:SHORT": 2
+        },
+        "DASH|WORD:MED|PAUSE:;|WORD:SHORT": {
+            "WORD:SHORT": 2
+        },
+        "DASH|PAUSE:;|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 2
+        },
+        "QUOTE|WORD:SHORT|SEGMENT:DASH|WORD:LONG": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|SEGMENT:DASH|WORD:LONG|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:MED|WORD:MED|PAUSE:,": {
+            "WORD:SHORT": 1,
+            "WORD:MED": 1
+        },
+        "DASH|WORD:SHORT|WORD:LONG|WORD:LONG": {
+            "WORD:SHORT": 1
+        },
+        "DASH|WORD:LONG|WORD:LONG|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|PAUSE:;|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:SHORT|PAUSE:,|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|PAUSE:,|PAUSE:,|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "QUOTE|WORD:MED|PAUSE:,|PAUSE:,": {
+            "WORD:MED": 1
+        },
+        "QUOTE|PAUSE:,|PAUSE:,|WORD:MED": {
+            "WORD:MED": 1
+        },
+        "QUOTE|PAUSE:,|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:SHORT|PAUSE::": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:SHORT|PAUSE::|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|PAUSE::|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "SQUOTE|START|START|START": {
+            "WORD:SHORT": 1
+        },
+        "SQUOTE|START|START|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "SQUOTE|START|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "SQUOTE|WORD:SHORT|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 13,
+            "WORD:MED": 1,
+            "END": 1
+        },
+        "SQUOTE|WORD:SHORT|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 10,
+            "WORD:MED": 5,
+            "SEGMENT:QUOTE": 1,
+            "PAUSE:,": 1
+        },
+        "SQUOTE|WORD:MED|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 4,
+            "WORD:SHORT": 8
+        },
+        "SQUOTE|WORD:MED|WORD:SHORT|WORD:MED": {
+            "WORD:SHORT": 4,
+            "WORD:MED": 1
+        },
+        "SQUOTE|WORD:MED|WORD:SHORT|SEGMENT:QUOTE": {
+            "WORD:SHORT": 1
+        },
+        "SQUOTE|WORD:SHORT|SEGMENT:QUOTE|WORD:SHORT": {
+            "WORD:SHORT": 1
+        },
+        "SQUOTE|SEGMENT:QUOTE|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "SQUOTE|WORD:MED|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "SQUOTE|WORD:SHORT|PAUSE:,|WORD:SHORT": {
+            "WORD:SHORT": 3
+        },
+        "SQUOTE|PAUSE:,|WORD:SHORT|WORD:SHORT": {
+            "WORD:SHORT": 3
+        },
+        "SQUOTE|WORD:SHORT|WORD:SHORT|WORD:SHORT": {
+            "WORD:MED": 9,
+            "PAUSE:,": 2,
+            "WORD:SHORT": 16
+        },
+        "SQUOTE|WORD:SHORT|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 2
+        },
+        "SQUOTE|WORD:SHORT|WORD:MED|WORD:MED": {
+            "WORD:SHORT": 2
+        },
+        "SQUOTE|WORD:MED|WORD:MED|WORD:SHORT": {
+            "WORD:SHORT": 2
+        },
+        "DASH|WORD:SHORT|WORD:MED|SEGMENT:SQUOTE": {
+            "WORD:MED": 1
+        },
+        "DASH|WORD:MED|SEGMENT:SQUOTE|WORD:MED": {
+            "WORD:SHORT": 1
+        },
+        "DASH|SEGMENT:SQUOTE|WORD:MED|WORD:SHORT": {
+            "WORD:MED": 1
+        },
+        "SENTENCE|WORD:LONG|WORD:SHORT|PAUSE:,": {
+            "WORD:SHORT": 1
+        },
+        "QUOTE|WORD:SHORT|WORD:SHORT|PAUSE:-": {
+            "WORD:SHORT": 1,
+            "SEGMENT:DASH": 1
+        },
+        "QUOTE|PAUSE:-|WORD:SHORT|WORD:MED": {
+            "PAUSE:,": 1
+        },
+        "QUOTE|WORD:SHORT|PAUSE:-|SEGMENT:DASH": {
+            "END": 1
+        }
+    },
+    "lengthStats": {
+        "SENTENCE": [
+            50,
+            1,
+            0,
+            2,
+            11,
+            23,
+            10,
+            29,
+            0,
+            1,
+            1,
+            3,
+            6,
+            17,
+            2,
+            1,
+            35,
+            23,
+            0,
+            35,
+            9,
+            13,
+            38,
+            0,
+            24,
+            15,
+            9,
+            0,
+            43,
+            0,
+            30,
+            21,
+            14,
+            32,
+            16,
+            0,
+            27,
+            49,
+            32,
+            0,
+            52,
+            0,
+            2,
+            23,
+            16,
+            13,
+            9,
+            12,
+            0,
+            19,
+            0,
+            10,
+            14,
+            27,
+            3,
+            23,
+            0,
+            1,
+            3,
+            0,
+            12,
+            0,
+            5,
+            0,
+            35,
+            0,
+            1,
+            0,
+            10,
+            1,
+            0,
+            4,
+            9,
+            8,
+            0,
+            31,
+            0,
+            40,
+            0,
+            30,
+            11,
+            0,
+            29,
+            0,
+            16,
+            8,
+            29,
+            25,
+            15,
+            27,
+            0,
+            7,
+            5,
+            0,
+            1,
+            20,
+            0,
+            62,
+            0,
+            16,
+            0,
+            8,
+            7,
+            0,
+            14,
+            0,
+            31,
+            19,
+            0,
+            2,
+            31,
+            9,
+            0,
+            15,
+            0,
+            18,
+            31,
+            0,
+            16,
+            0,
+            1,
+            12,
+            0,
+            4,
+            0,
+            1,
+            16,
+            0,
+            1,
+            15,
+            0,
+            29,
+            0,
+            1,
+            2,
+            0,
+            8,
+            0,
+            3,
+            0,
+            16,
+            0,
+            1,
+            0,
+            5,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            23,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            8,
+            0,
+            1,
+            5,
+            1,
+            0,
+            1,
+            0,
+            18,
+            1,
+            0,
+            19,
+            0,
+            3,
+            0,
+            20,
+            5,
+            0,
+            1,
+            13,
+            0,
+            1,
+            17,
+            1,
+            23,
+            0,
+            1,
+            14,
+            11,
+            13,
+            11,
+            0,
+            1,
+            21,
+            10,
+            23,
+            9,
+            0,
+            1,
+            21,
+            14,
+            3,
+            6,
+            10,
+            18,
+            0,
+            0,
+            0,
+            0,
+            1,
+            15,
+            13,
+            19,
+            0,
+            0,
+            0,
+            14,
+            28,
+            2,
+            10,
+            11,
+            32,
+            0,
+            0,
+            0,
+            16,
+            0,
+            0,
+            0,
+            1,
+            25,
+            1,
+            2,
+            1,
+            18,
+            1,
+            12,
+            9,
+            1
+        ],
+        "DASH": [
+            5,
+            7,
+            4,
+            9,
+            16,
+            8,
+            18,
+            5,
+            18,
+            13,
+            5,
+            9,
+            11,
+            7,
+            11,
+            15,
+            10,
+            7,
+            16,
+            21,
+            2,
+            5,
+            7,
+            32,
+            37,
+            14,
+            38,
+            10,
+            8,
+            9,
+            11,
+            13,
+            14,
+            2,
+            9,
+            11,
+            12,
+            2,
+            4,
+            8,
+            2,
+            10,
+            4,
+            7,
+            3,
+            4,
+            0,
+            7,
+            5,
+            3,
+            2,
+            9,
+            8,
+            7,
+            8,
+            7,
+            25,
+            14,
+            9,
+            6,
+            16,
+            5,
+            17,
+            16,
+            21,
+            5,
+            4,
+            7,
+            7,
+            28,
+            29,
+            8,
+            0,
+            6,
+            8
+        ],
+        "PAUSE": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "PAREN": [
+            11,
+            5,
+            4
+        ],
+        "QUOTE": [
+            5,
+            24,
+            3,
+            8,
+            1,
+            1,
+            3,
+            3,
+            1,
+            4,
+            10,
+            10,
+            15,
+            1,
+            5,
+            19,
+            15,
+            31,
+            9,
+            8,
+            26,
+            2,
+            1,
+            1,
+            9,
+            5,
+            10,
+            2,
+            7,
+            9,
+            8,
+            13,
+            5,
+            5,
+            6,
+            1,
+            8,
+            2,
+            5,
+            9,
+            4,
+            3,
+            18,
+            6,
+            8,
+            14,
+            5,
+            35,
+            9,
+            66,
+            8,
+            11,
+            5,
+            10,
+            47,
+            9,
+            7,
+            13,
+            6,
+            116,
+            86,
+            90,
+            69,
+            77,
+            34,
+            13,
+            3,
+            13,
+            0
+        ],
+        "HYPHEN": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "SQUOTE": [
+            98
+        ]
+    },
+    "segmentStarts": {
+        "DASH": [
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:MED|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:MED|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:LONG",
+            "WORD:MED|PAUSE:,|WORD:SHORT",
+            "WORD:SHORT|WORD:LONG|PAUSE:,",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:MED|WORD:SHORT|PAUSE:,",
+            "WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:LONG",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:MED|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:MED|WORD:SHORT",
+            "WORD:MED|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:LONG|WORD:MED",
+            "WORD:MED|WORD:MED|PAUSE:,",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:MED|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT"
+        ],
+        "SENTENCE": [
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "SEGMENT:PAREN",
+            "SEGMENT:DASH",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "SEGMENT:QUOTE|WORD:SHORT|PAUSE:,",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT",
+            "SEGMENT:DASH",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:MED|WORD:SHORT|WORD:SHORT",
+            "WORD:LONG|WORD:MED",
+            "WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|SEGMENT:DASH",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|PAUSE:,",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|PAUSE:,",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:LONG|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|PAUSE:,",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|PAUSE:,",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "SEGMENT:QUOTE|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|SEGMENT:DASH|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "SEGMENT:QUOTE|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "WORD:MED|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|SEGMENT:DASH",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "SEGMENT:QUOTE|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:LONG|WORD:MED",
+            "WORD:SHORT|WORD:LONG|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:LONG",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "SEGMENT:QUOTE|WORD:SHORT|PAUSE:,",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|SEGMENT:DASH|WORD:SHORT",
+            "WORD:MED|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "WORD:SHORT|WORD:MED|PAUSE:,",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|PAUSE:,",
+            "SEGMENT:QUOTE|WORD:MED|WORD:SHORT",
+            "SEGMENT:QUOTE|WORD:MED|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "SEGMENT:QUOTE|WORD:MED|PAUSE:,",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "SEGMENT:QUOTE|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|SEGMENT:DASH",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "SEGMENT:QUOTE|WORD:SHORT|PAUSE:,",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:MED|PAUSE:,",
+            "SEGMENT:QUOTE|WORD:SHORT|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "SEGMENT:QUOTE|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "SEGMENT:QUOTE",
+            "SEGMENT:QUOTE",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "SEGMENT:QUOTE",
+            "SEGMENT:QUOTE",
+            "SEGMENT:QUOTE",
+            "WORD:MED|WORD:SHORT|WORD:SHORT",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "SEGMENT:QUOTE",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "SEGMENT:QUOTE|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:MED|WORD:SHORT|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:MED|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:SHORT|PAUSE:,",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|SEGMENT:DASH",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "SEGMENT:QUOTE",
+            "WORD:MED|WORD:MED",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "SEGMENT:QUOTE",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "SEGMENT:QUOTE"
+        ],
+        "PAREN": [
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT"
+        ],
+        "QUOTE": [
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|PAUSE:-",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:MED",
+            "WORD:MED",
+            "WORD:MED|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:LONG",
+            "WORD:MED|WORD:MED|WORD:SHORT",
+            "WORD:MED|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|PAUSE:,",
+            "WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:LONG",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|PAUSE:,|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:MED|PAUSE:,",
+            "WORD:MED",
+            "WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:MED|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:MED",
+            "WORD:SHORT|WORD:LONG|WORD:SHORT",
+            "WORD:SHORT|WORD:LONG|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:MED|PAUSE:,",
+            "WORD:SHORT|WORD:MED|PAUSE:-",
+            "WORD:MED|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:MED",
+            "WORD:SHORT|WORD:MED|SEGMENT:DASH",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|SEGMENT:DASH|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|SEGMENT:DASH",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|SEGMENT:DASH|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|SEGMENT:DASH|WORD:MED",
+            "WORD:MED|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:MED",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:MED|PAUSE::|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|PAUSE:,|WORD:SHORT",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:MED",
+            "WORD:SHORT|PAUSE:,|WORD:MED",
+            "WORD:SHORT|WORD:MED|WORD:SHORT",
+            "WORD:SHORT|WORD:SHORT|WORD:SHORT"
+        ],
+        "SQUOTE": [
+            "WORD:SHORT|WORD:SHORT|WORD:MED"
+        ]
+    },
+    "transitions": {
+        "TERM": {
+            ".": 184,
+            "?": 8,
+            "!": 11
+        }
+    }
+}

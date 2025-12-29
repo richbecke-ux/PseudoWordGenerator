@@ -88,8 +88,18 @@ class Segment {
 
 class Tokenizer {
 
+    int quoteMode = 2  // Default to simpler mode; can be set to 1 for stricter validation
+
     boolean isBoundary(char c) {
         return Character.isWhitespace(c) || Globals.TERMINATORS.contains(c.toString()) || Globals.PAUSES.contains(c.toString()) || c == ')' || c == ']'
+    }
+
+    boolean isConsonantOnly(String word) {
+        if (!word) return false
+        String lower = word.toLowerCase()
+        return lower.every { String c ->
+            Character.isLetter(c as char) && !Globals.VOWELS.contains(c)
+        }
     }
 
     List<Token> tokenize(String text) {
@@ -100,31 +110,82 @@ class Tokenizer {
             char c = text.charAt(i)
             String s = c.toString()
 
-            // Acronym Logic
+            // Acronym Logic - IMPROVED
             boolean isAcronymDot = false
             if (s == '.') {
                 boolean prevIsAlpha = buffer.length() > 0 && Character.isLetter(buffer.charAt(buffer.length() - 1))
                 boolean nextIsAlpha = (i < text.length() - 1) && Character.isLetter(text.charAt(i+1))
-                if (prevIsAlpha && nextIsAlpha) isAcronymDot = true
-                else if (prevIsAlpha && buffer.length() >= 2 && buffer.charAt(buffer.length() - 2) == '.') isAcronymDot = true
+
+                // Standard acronym: U.S.A.
+                if (prevIsAlpha && nextIsAlpha) {
+                    isAcronymDot = true
+                }
+                // Repeated dots: U.S.
+                else if (prevIsAlpha && buffer.length() >= 2 && buffer.charAt(buffer.length() - 2) == '.') {
+                    isAcronymDot = true
+                }
+                // Consonant-only cluster: Mr. Mrs. Dr. vs. etc.
+                else if (prevIsAlpha && isConsonantOnly(buffer.toString())) {
+                    String bufferLower = buffer.toString().toLowerCase()
+                    if (bufferLower == 'etc') {
+                        // "etc." is only an abbreviation if followed by comma, colon, semicolon, dash, or more text
+                        boolean nextIsPunctContinuation = (i < text.length() - 1) &&
+                                [',', ';', ':', '-'].contains(text.charAt(i+1).toString())
+                        boolean hasMoreText = (i < text.length() - 1) && !Character.isWhitespace(text.charAt(i+1))
+                        isAcronymDot = nextIsPunctContinuation || (hasMoreText && !nextIsPunctContinuation)
+                    } else {
+                        // All other consonant clusters are abbreviations
+                        isAcronymDot = true
+                    }
+                }
             }
 
             if (s == '\'') {
-                boolean prevIsSpace = (i == 0) || isBoundary(text.charAt(i-1))
-                boolean nextIsAlpha = (i < text.length() - 1) && Character.isLetterOrDigit(text.charAt(i+1))
-                boolean prevIsAlpha = (i > 0) && !isBoundary(text.charAt(i-1))
-                boolean nextIsSpace = (i == text.length() - 1) || isBoundary(text.charAt(i+1))
+                if (quoteMode == 2) {
+                    // MODE 2: Simpler tokenizer-level fix
+                    boolean prevIsSpace = (i == 0) || isBoundary(text.charAt(i-1))
+                    boolean nextIsAlpha = (i < text.length() - 1) && Character.isLetterOrDigit(text.charAt(i+1))
+                    boolean prevIsAlpha = (i > 0) && !isBoundary(text.charAt(i-1))
+                    boolean nextIsSpace = (i == text.length() - 1) || isBoundary(text.charAt(i+1))
 
-                if (prevIsSpace && nextIsAlpha) {
-                    if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
-                    tokens << new Token(type: 'OPEN_SQUOTE', value: "'", context: 'SQUOTE')
-                }
-                else if (prevIsAlpha && nextIsSpace) {
-                    if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
-                    tokens << new Token(type: 'CLOSE_SQUOTE', value: "'", context: 'SQUOTE')
-                }
-                else {
-                    buffer.append(c)
+                    // Opening single quote: must be preceded by space AND followed by uppercase letter
+                    // This avoids contractions like 'way, 'round which are lowercase
+                    boolean isLikelyOpening = prevIsSpace && nextIsAlpha &&
+                            Character.isUpperCase(text.charAt(i+1))
+
+                    // Closing single quote: preceded by alpha, followed by boundary
+                    boolean isLikelyClosing = prevIsAlpha && nextIsSpace
+
+                    if (isLikelyOpening) {
+                        if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
+                        tokens << new Token(type: 'OPEN_SQUOTE', value: "'", context: 'SQUOTE')
+                    }
+                    else if (isLikelyClosing) {
+                        if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
+                        tokens << new Token(type: 'CLOSE_SQUOTE', value: "'", context: 'SQUOTE')
+                    }
+                    else {
+                        // Everything else: part of word (possessives, contractions, etc.)
+                        buffer.append(c)
+                    }
+                } else {
+                    // MODE 1: Original logic - validation happens in parser
+                    boolean prevIsSpace = (i == 0) || isBoundary(text.charAt(i-1))
+                    boolean nextIsAlpha = (i < text.length() - 1) && Character.isLetterOrDigit(text.charAt(i+1))
+                    boolean prevIsAlpha = (i > 0) && !isBoundary(text.charAt(i-1))
+                    boolean nextIsSpace = (i == text.length() - 1) || isBoundary(text.charAt(i+1))
+
+                    if (prevIsSpace && nextIsAlpha) {
+                        if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
+                        tokens << new Token(type: 'OPEN_SQUOTE', value: "'", context: 'SQUOTE')
+                    }
+                    else if (prevIsAlpha && nextIsSpace) {
+                        if (buffer.length() > 0) { tokens << createWord(buffer); buffer = new StringBuilder() }
+                        tokens << new Token(type: 'CLOSE_SQUOTE', value: "'", context: 'SQUOTE')
+                    }
+                    else {
+                        buffer.append(c)
+                    }
                 }
             }
             else if (isAcronymDot) {
@@ -189,15 +250,41 @@ class Tokenizer {
 
 class Parser {
 
+    int quoteMode = 2  // Default to simpler mode; can be set to 1 for stricter validation
+
     boolean stackHasType(List<Segment> stack, String type) {
         return stack.any { it.type == type }
+    }
+
+    boolean isValidSingleQuoteSegment(List<Token> tokens, int startIdx, int endIdx) {
+        // Scan tokens between opening and closing single quote
+        for (int i = startIdx + 1; i < endIdx; i++) {
+            Token t = tokens[i]
+
+            // Period (sentence terminator) inside single quotes = invalid
+            if (t.type == 'TERM') {
+                return false
+            }
+
+            // Em-dash inside single quotes = invalid
+            if (t.type == 'TOGGLE' && t.context == 'DASH') {
+                return false
+            }
+
+            // Double quote inside single quotes = invalid
+            if (t.type == 'TOGGLE' && t.context == 'QUOTE') {
+                return false
+            }
+        }
+        return true
     }
 
     List<Segment> parse(List<Token> tokens) {
         List<Segment> completed = []
         List<Segment> stack = [new Segment(type: 'SENTENCE')]
 
-        tokens.each { tok ->
+        for (int i = 0; i < tokens.size(); i++) {
+            Token tok = tokens[i]
             if (stack.isEmpty()) stack.add(new Segment(type: 'SENTENCE'))
 
             String visual = tok.text ?: tok.value
@@ -246,10 +333,48 @@ class Parser {
                     break
 
                 case 'OPEN_SQUOTE':
-                    if (!stackHasType(stack, 'SQUOTE')) {
-                        Segment child = new Segment(type: 'SQUOTE', childInsertPosition: current.wordLengths.size())
-                        current.children << child
-                        stack.add(child)
+                    if (quoteMode == 1) {
+                        // MODE 1: Stricter validation
+                        // Look ahead to find matching close or invalidation
+                        int closeIdx = -1
+                        boolean isValid = true
+
+                        for (int j = i + 1; j < tokens.size(); j++) {
+                            Token ahead = tokens[j]
+
+                            // Found potential closing quote
+                            if (ahead.type == 'CLOSE_SQUOTE') {
+                                closeIdx = j
+                                break
+                            }
+
+                            // Invalid content before close - this is a contraction/apostrophe
+                            if (ahead.type == 'TERM' ||
+                                    (ahead.type == 'TOGGLE' && ahead.context == 'DASH') ||
+                                    (ahead.type == 'TOGGLE' && ahead.context == 'QUOTE')) {
+                                isValid = false
+                                break
+                            }
+                        }
+
+                        if (!isValid || closeIdx == -1) {
+                            // This is not actually a single quote - skip it (treat as contraction)
+                            break
+                        }
+
+                        // Valid single quote - proceed with normal handling
+                        if (!stackHasType(stack, 'SQUOTE')) {
+                            Segment child = new Segment(type: 'SQUOTE', childInsertPosition: current.wordLengths.size())
+                            current.children << child
+                            stack.add(child)
+                        }
+                    } else {
+                        // MODE 2: Original handling (already filtered by tokenizer)
+                        if (!stackHasType(stack, 'SQUOTE')) {
+                            Segment child = new Segment(type: 'SQUOTE', childInsertPosition: current.wordLengths.size())
+                            current.children << child
+                            stack.add(child)
+                        }
                     }
                     break
 
@@ -340,6 +465,7 @@ class Config {
     boolean uniqueMode = false
     int pruneMinTokens = 0
     int ngramMode = 3
+    int quoteMode = 2  // Default to mode 2 (simpler)
     int count = 20
     boolean valid = false
     String error = ""
@@ -352,6 +478,7 @@ Input File        : ${f_File}
 Word Stats Out    : ${wordStatsFile}
 Sentence Stats Out: ${sentenceStatsFile ?: '(None)'}
 Unique Mode       : ${uniqueMode ? 'Active (Saving vocabulary list)' : 'Inactive'}
+Quote Mode        : ${quoteMode} (${quoteMode == 1 ? 'Strict Validation' : 'Simple Tokenizer'})
 Debug Mode        : ${debug ? 'Active (Printing Parse Tree)' : 'Inactive'}
 =============================="""
         } else {
@@ -364,6 +491,7 @@ Output Format     : ${lineOutput ? 'Line-by-Line (-l)' : 'Space-Separated (Defau
 N-Gram Mode       : ${ngramMode} (Initial Target)
 Unique Mode       : ${uniqueMode ? 'Active (Fallback: Tri->Bi->Uni)' : 'Inactive'}
 Marking Mode      : ${markingMode ? 'Active (-m)' : 'Inactive'}
+Prune Mode        : ${pruneMinTokens > 0 ? "Active (excluding ≤ ${pruneMinTokens} tokens)" : 'Inactive'}
 Count             : ${count}
 ================================"""
         }
@@ -387,6 +515,7 @@ def parseArgs(String[] args) {
             case '-u': cfg.uniqueMode = true; break
             case '-p': cfg.pruneMinTokens = args[++i].toInteger(); break
             case '-c': cfg.count = args[++i].toInteger(); break
+            case '-q': cfg.quoteMode = args[++i].toInteger(); break
             case '-1': cfg.ngramMode = 1; break
             case '-2': case '-b': cfg.ngramMode = 2; break
             case '-3': case '-t': cfg.ngramMode = 3; break
@@ -395,6 +524,7 @@ def parseArgs(String[] args) {
     }
     if (cfg.analyze && cfg.generate) { cfg.error = "Ambiguous Mode: Select either -a or -g."; return cfg }
     if (!cfg.analyze && !cfg.generate) { cfg.error = "No Mode Specified: Use -a or -g."; return cfg }
+    if (cfg.quoteMode != 1 && cfg.quoteMode != 2) { cfg.error = "Invalid quote mode: Use -q 1 or -q 2."; return cfg }
     cfg.valid = true
     return cfg
 }
@@ -567,6 +697,10 @@ class Analyzer {
     }
 
     void process(Config cfg) {
+        // Set quote mode for both tokenizer and parser
+        tokenizer.quoteMode = cfg.quoteMode
+        parser.quoteMode = cfg.quoteMode
+
         println "📖 Analyzing source..."
         def rawText = new File(cfg.f_File).getText("UTF-8")
         def text = cleanText(rawText)
@@ -598,8 +732,8 @@ class Analyzer {
                         def bgMap = (idx == len - 1) ? bigramLast : (idx == 1) ? bigramStart : bigramInner
                         Utils.ensureMap(bgMap, effLen, prevContent)[content] = (Utils.ensureMap(bgMap, effLen, prevContent)[content] ?: 0) + 1
                         if (idx >= 2) {
-                            def prev2 = struct[idx-2][1]
-                            def tgKey = "${prev2}:${prevContent}"
+                            def prevPrev = struct[idx-2][1]
+                            def tgKey = "${prevPrev}:${prevContent}"
                             def tgMap = (idx == len - 1) ? trigramLast : trigramInner
                             Utils.ensureMap(tgMap, effLen, tgKey)[content] = (Utils.ensureMap(tgMap, effLen, tgKey)[content] ?: 0) + 1
                         }
@@ -607,55 +741,47 @@ class Analyzer {
                 }
             }
         }
+        println "✅ Words analyzed: ${wordsProcessed}"
 
         if (cfg.sentenceStatsFile) {
-            def segments = parser.parse(tokens)
+            List<Segment> parsedSegments = parser.parse(tokens)
+            if (cfg.debug) debugSegments(parsedSegments)
 
-            if (cfg.debug) debugSegments(segments)
-
-            segments = segments.findAll { seg -> seg.wordLengths.size() > 1 || !seg.children.isEmpty() }
-
-            markovAnalyzer.train(segments)
-            segments.each { s ->
-                if (s.terminator) transitions.computeIfAbsent('TERM', {[:]}).merge(s.terminator, 1, Integer::sum)
+            parsedSegments.each { rootSeg ->
+                if (rootSeg.terminator) transitions["TERM"] = (transitions["TERM"] ?: [:]).tap { it[rootSeg.terminator] = (it[rootSeg.terminator] ?: 0) + 1 }
             }
-        }
 
-        println "\n📊 Analysis Stats:"
-        println "   Words Processed: ${wordsProcessed}"
-        if (cfg.uniqueMode) println "   Unique Vocabulary: ${vocabulary.size()} words stored"
-        if (cfg.sentenceStatsFile) {
-            println "   Structural Rules: ${markovAnalyzer.markovChain.size()} contexts learned"
-            println "   Structure Types: ${markovAnalyzer.lengthStats.keySet()}"
+            markovAnalyzer.train(parsedSegments)
+            println "✅ Sentences analyzed: ${parsedSegments.size()}"
         }
-        println ""
     }
 
     void save(Config cfg) {
         def wordData = [
-                vocabulary: (cfg.uniqueMode ? vocabulary : null),
-                lengthStartStats: lengthStartStats,
-                startTokens: startTokens,
-                innerTokens: innerTokens,
-                lastTokens: lastTokens,
-                bigramStart: bigramStart,
-                bigramInner: bigramInner,
-                bigramLast: bigramLast,
-                trigramInner: trigramInner,
-                trigramLast: trigramLast
+                lengthStats: lengthStartStats,
+                startTokens: startTokens.collectEntries { k, v -> [k, v.collectEntries { k2, v2 -> [k2, v2] }] },
+                innerTokens: innerTokens.collectEntries { k, v -> [k, v.collectEntries { k2, v2 -> [k2, v2] }] },
+                lastTokens: lastTokens.collectEntries { k, v -> [k, v.collectEntries { k2, v2 -> [k2, v2] }] },
+                bigramStart: bigramStart.collectEntries { k, v -> [k, v.collectEntries { k2, v2 -> [k2, v2] }] },
+                bigramInner: bigramInner.collectEntries { k, v -> [k, v.collectEntries { k2, v2 -> [k2, v2] }] },
+                bigramLast: bigramLast.collectEntries { k, v -> [k, v.collectEntries { k2, v2 -> [k2, v2] }] },
+                trigramInner: trigramInner.collectEntries { k, v -> [k, v.collectEntries { k2, v2 -> [k2, v2] }] },
+                trigramLast: trigramLast.collectEntries { k, v -> [k, v.collectEntries { k2, v2 -> [k2, v2] }] }
         ]
-        Files.write(Paths.get(cfg.wordStatsFile), JsonOutput.toJson(wordData).getBytes("UTF-8"))
-        println "💾 Word Stats -> ${cfg.wordStatsFile}"
+        if (cfg.uniqueMode) wordData.vocabulary = vocabulary.toList()
+
+        new File(cfg.wordStatsFile).write(JsonOutput.prettyPrint(JsonOutput.toJson(wordData)))
+        println "💾 Saved word stats to ${cfg.wordStatsFile}"
 
         if (cfg.sentenceStatsFile) {
-            def rhythmData = [
+            def sentenceData = [
                     markovChain: markovAnalyzer.markovChain,
                     lengthStats: markovAnalyzer.lengthStats,
                     segmentStarts: markovAnalyzer.segmentStarts,
                     transitions: transitions
             ]
-            Files.write(Paths.get(cfg.sentenceStatsFile), JsonOutput.toJson(rhythmData).getBytes("UTF-8"))
-            println "💾 Sentence Stats -> ${cfg.sentenceStatsFile}"
+            new File(cfg.sentenceStatsFile).write(JsonOutput.prettyPrint(JsonOutput.toJson(sentenceData)))
+            println "💾 Saved sentence stats to ${cfg.sentenceStatsFile}"
         }
     }
 }
@@ -666,7 +792,7 @@ class Analyzer {
 
 class Generator {
     WeightedSelector mainLengthSelector
-    Map<String, WeightedSelector> lengthToStartTypeSel = [:]
+    Map<String, WeightedSelector> typeSel = [:]
     Map<String, Map<String, WeightedSelector>> startSel = [:]
     Map<String, Map<String, WeightedSelector>> innerSel = [:]
     Map<String, Map<String, WeightedSelector>> lastSel = [:]
@@ -676,104 +802,196 @@ class Generator {
     Map<String, Map<String, WeightedSelector>> trigramInnerSel = [:]
     Map<String, Map<String, WeightedSelector>> trigramLastSel = [:]
     Set<String> loadedVocabulary = null
-    Map<String, WeightedSelector> transitionSel = [:]
-    Map<String, Map<String, WeightedSelector>> markovSelectors = [:]
-    Map<String, List<Integer>> lengthStats = [:]
-    Map<String, List<String>> segmentStarts = [:]
-    int contextDepth = 3
+
+    WeightedSelector transitionSel
+
+    Map<String, WeightedSelector> segmentLengthSel = [:]
+    Map<String, WeightedSelector> segmentStartSel = [:]
+    Map<String, Map<String, WeightedSelector>> segmentMarkovSel = [:]
 
     void loadWordModel(Config cfg) {
-        println "📂 Loading Word Model..."
-        def json = new JsonSlurper().parse(new File(cfg.wordStatsFile))
-        if (json.vocabulary) loadedVocabulary = new HashSet<>(json.vocabulary)
+        def data = new JsonSlurper().parse(new File(cfg.wordStatsFile))
 
-        Map<String, Integer> rawLengthStats = json.lengthStartStats
-        if (cfg.pruneMinTokens > 0 && !cfg.sentenceStatsFile) {
-            println "✂️ Pruning words with <= ${cfg.pruneMinTokens} tokens (Word Mode active)..."
-            rawLengthStats = rawLengthStats.findAll { k, v -> k.split(':')[0].toInteger() > cfg.pruneMinTokens }
-        }
+        // Apply pruning if requested - remove all stats for words <= pruneMinTokens
+        if (cfg.pruneMinTokens > 0) {
+            println "✂️  Pruning model: removing stats for words with ≤ ${cfg.pruneMinTokens} tokens..."
 
-        mainLengthSelector = new WeightedSelector(rawLengthStats)
+            // Filter lengthStats (format: "5:C" -> count)
+            def originalCount = data.lengthStats?.size() ?: 0
+            data.lengthStats = data.lengthStats?.findAll { fusedKey, count ->
+                def len = fusedKey.split(':')[0].toInteger()
+                len > cfg.pruneMinTokens
+            } ?: [:]
 
-        rawLengthStats.each { k, v ->
-            def parts = k.split(':'); lengthToStartTypeSel.computeIfAbsent(parts[0], {[:]}).put(parts[1], v)
-        }
-        lengthToStartTypeSel.each { k, v -> lengthToStartTypeSel[k] = new WeightedSelector(v) }
-
-        def build = { src, dest -> src.each { k1, inner -> dest[k1] = [:]; inner.each { k2, map -> dest[k1][k2] = new WeightedSelector(map) } } }
-        build(json.startTokens, startSel); build(json.innerTokens, innerSel); build(json.lastTokens, lastSel)
-        build(json.bigramStart, bigramStartSel); build(json.bigramInner, bigramInnerSel); build(json.bigramLast, bigramLastSel)
-        build(json.trigramInner, trigramInnerSel); build(json.trigramLast, trigramLastSel)
-    }
-
-    void loadRhythmModel(String path) {
-        println "📂 Loading Rhythm Model (Markov)..."
-        def json = new JsonSlurper().parse(new File(path))
-        json.markovChain.each { ctx, nextMap -> markovSelectors[ctx] = new WeightedSelector(nextMap) }
-        lengthStats = json.lengthStats
-        segmentStarts = json.segmentStarts
-        json.transitions.each { k, v -> transitionSel[k] = new WeightedSelector(v) }
-    }
-
-    Segment generateStructure(String type, int depth) {
-        Segment seg = new Segment(type: type)
-        def lens = lengthStats[type]
-        if (!lens) return seg
-        int targetLen = lens[Globals.RND.nextInt(lens.size())]
-        def starts = segmentStarts[type]
-        if (!starts) return seg
-        String startCtx = starts[Globals.RND.nextInt(starts.size())]
-        List<String> context = startCtx.split(/\|/).toList()
-        context.each { token -> applyToken(seg, token, depth) }
-        int currentLen = context.size()
-
-        while (true) {
-            String key = "${type}|" + context.takeRight(contextDepth).join("|")
-            def sel = markovSelectors[key]
-            if (!sel) break
-            String nextToken = sel.select(Globals.RND)
-            if (nextToken.startsWith("PAUSE") && context.size() > 0 && context.last().startsWith("PAUSE")) break
-            if (currentLen >= targetLen * 1.5) {
-                if (sel.keys.contains("END")) nextToken = "END"
-                else if (nextToken.startsWith("PAUSE") || nextToken.startsWith("SEGMENT")) break
+            // Filter all token distribution maps by effLen key
+            def filterByEffLen = { Map dist ->
+                dist?.findAll { effLen, inner ->
+                    effLen.toInteger() > cfg.pruneMinTokens
+                } ?: [:]
             }
-            if (nextToken == "END") break
-            applyToken(seg, nextToken, depth)
-            context << nextToken
-            currentLen++
-            if (currentLen > 100) break
+
+            data.startTokens = filterByEffLen(data.startTokens)
+            data.innerTokens = filterByEffLen(data.innerTokens)
+            data.lastTokens = filterByEffLen(data.lastTokens)
+            data.bigramStart = filterByEffLen(data.bigramStart)
+            data.bigramInner = filterByEffLen(data.bigramInner)
+            data.bigramLast = filterByEffLen(data.bigramLast)
+            data.trigramInner = filterByEffLen(data.trigramInner)
+            data.trigramLast = filterByEffLen(data.trigramLast)
+
+            def remainingCount = data.lengthStats?.size() ?: 0
+            println "   Length entries: ${originalCount} → ${remainingCount} (removed ${originalCount - remainingCount})"
         }
-        return seg
+
+        mainLengthSelector = new WeightedSelector(data.lengthStats ?: [:])
+
+        data.lengthStats?.each { fusedKey, count ->
+            def startType = fusedKey.split(':')[1]
+            typeSel[fusedKey] = new WeightedSelector([(startType): count])
+        }
+
+        data.startTokens?.each { effLen, byType ->
+            byType.each { type, freqs ->
+                startSel.computeIfAbsent(effLen, {[:]}).put(type, new WeightedSelector(freqs ?: [:]))
+            }
+        }
+        data.innerTokens?.each { effLen, byType ->
+            byType.each { type, freqs ->
+                innerSel.computeIfAbsent(effLen, {[:]}).put(type, new WeightedSelector(freqs ?: [:]))
+            }
+        }
+        data.lastTokens?.each { effLen, byType ->
+            byType.each { type, freqs ->
+                lastSel.computeIfAbsent(effLen, {[:]}).put(type, new WeightedSelector(freqs ?: [:]))
+            }
+        }
+        data.bigramStart?.each { effLen, byPrev ->
+            byPrev.each { prev, freqs ->
+                bigramStartSel.computeIfAbsent(effLen, {[:]}).put(prev, new WeightedSelector(freqs ?: [:]))
+            }
+        }
+        data.bigramInner?.each { effLen, byPrev ->
+            byPrev.each { prev, freqs ->
+                bigramInnerSel.computeIfAbsent(effLen, {[:]}).put(prev, new WeightedSelector(freqs ?: [:]))
+            }
+        }
+        data.bigramLast?.each { effLen, byPrev ->
+            byPrev.each { prev, freqs ->
+                bigramLastSel.computeIfAbsent(effLen, {[:]}).put(prev, new WeightedSelector(freqs ?: [:]))
+            }
+        }
+        data.trigramInner?.each { effLen, byPrev ->
+            byPrev.each { prev, freqs ->
+                trigramInnerSel.computeIfAbsent(effLen, {[:]}).put(prev, new WeightedSelector(freqs ?: [:]))
+            }
+        }
+        data.trigramLast?.each { effLen, byPrev ->
+            byPrev.each { prev, freqs ->
+                trigramLastSel.computeIfAbsent(effLen, {[:]}).put(prev, new WeightedSelector(freqs ?: [:]))
+            }
+        }
+
+        if (data.vocabulary) {
+            loadedVocabulary = new HashSet<>(data.vocabulary)
+            println "📚 Vocabulary loaded: ${loadedVocabulary.size()} words"
+        }
     }
 
-    void applyToken(Segment seg, String token, int depth) {
-        def parts = token.split(':')
-        def t = parts[0]
-        def v = parts.size() > 1 ? parts[1] : ""
-        if (t == "WORD") {
-            int len = 0
-            if (v == "SHORT") len = Globals.RND.nextInt(3) + 1
-            else if (v == "MED") len = Globals.RND.nextInt(4) + 4
-            else len = Globals.RND.nextInt(5) + 8
-            seg.wordLengths << len
-        } else if (t == "PAUSE") {
-            // Handle both actual PAUSE and HYPHEN types from the Markov stream
-            String childType = (v == '-') ? 'HYPHEN' : 'PAUSE'
-            seg.children << new Segment(type: childType, terminator: v, childInsertPosition: seg.wordLengths.size())
-        } else if (t == "SEGMENT") {
-            if (depth < 4) {
-                Segment child = generateStructure(v, depth + 1)
+    void loadRhythmModel(String filepath) {
+        def data = new JsonSlurper().parse(new File(filepath))
+
+        data.lengthStats?.each { segType, counts ->
+            Map<String, Integer> freqMap = [:]
+            counts.eachWithIndex { val, idx -> freqMap["${val}"] = (freqMap["${val}"] ?: 0) + 1 }
+            segmentLengthSel[segType] = new WeightedSelector(freqMap)
+        }
+
+        data.segmentStarts?.each { segType, starts ->
+            Map<String, Integer> freqMap = [:]
+            starts.each { s -> freqMap[s] = (freqMap[s] ?: 0) + 1 }
+            segmentStartSel[segType] = new WeightedSelector(freqMap)
+        }
+
+        data.markovChain?.each { key, nexts ->
+            segmentMarkovSel.computeIfAbsent(key, { new WeightedSelector(nexts) })
+        }
+
+        transitionSel = new WeightedSelector(data.transitions?.TERM ?: [:])
+        println "✨ Loaded rhythm/structure model from ${filepath}"
+    }
+
+    Segment generateStructure(String segType, int depth) {
+        if (depth > 10) return new Segment(type: segType, wordLengths: [], children: [])
+
+        def targetLenSel = segmentLengthSel[segType]
+        if (!targetLenSel) return new Segment(type: segType, wordLengths: [1, 2])
+
+        def targetLen = targetLenSel.select(Globals.RND)?.toInteger() ?: 2
+
+        def startStringSel = segmentStartSel[segType]
+        def startString = startStringSel?.select(Globals.RND)
+        def context = startString ? startString.split("\\|").toList() : []
+
+        List<String> stream = []
+        if (!context.isEmpty()) { stream.addAll(context) }
+        else { stream << "WORD:MED" }
+
+        while (stream.size() < targetLen) {
+            def lookupKey = buildMarkovKey(segType, stream)
+            def sel = segmentMarkovSel[lookupKey]
+            if (!sel) break
+            def next = sel.select(Globals.RND)
+            if (!next || next == "END") break
+            stream << next
+        }
+
+        Segment seg = new Segment(type: segType)
+
+        stream.eachWithIndex { ent, i ->
+            def parts = ent.split(':', 2)
+            def eType = parts[0]
+            def eVal = parts[1]
+
+            if (eType == 'WORD') {
+                int wordLen
+                switch (eVal) {
+                    case 'SHORT': wordLen = 1 + Globals.RND.nextInt(3); break
+                    case 'MED': wordLen = 4 + Globals.RND.nextInt(4); break
+                    case 'LONG': wordLen = 8 + Globals.RND.nextInt(5); break
+                    default: wordLen = 3
+                }
+                seg.wordLengths << wordLen
+            } else if (eType == 'PAUSE') {
+                seg.children << new Segment(type: 'PAUSE', terminator: eVal, childInsertPosition: seg.wordLengths.size())
+            } else if (eType == 'SEGMENT') {
+                Segment child = generateStructure(eVal, depth + 1)
                 child.childInsertPosition = seg.wordLengths.size()
                 seg.children << child
             }
         }
+
+        return seg
+    }
+
+    String buildMarkovKey(String segType, List<String> stream) {
+        int maxDepth = 3
+        def contextList = []
+        for (int j = 1; j <= maxDepth; j++) {
+            def idx = stream.size() - j
+            if (idx >= 0) contextList.add(0, stream[idx])
+            else contextList.add(0, "START")
+        }
+        return "${segType}|" + contextList.join("|")
     }
 
     String generateWord(int targetLen, int ngramMode) {
-        def lenKey = targetLen.toString()
-        def typeSel = lengthToStartTypeSel[lenKey]
-        if (!typeSel) {
-            def fused = mainLengthSelector.select(Globals.RND)
+        def fused = mainLengthSelector.select(Globals.RND)
+        String lenKey = targetLen.toString()
+        WeightedSelector typeSel = this.typeSel[fused]
+        if (!fused || !typeSel) {
+            fused = "${targetLen}:C"
+            typeSel = new WeightedSelector([C: 1])
+        } else {
             if (!fused) return "blob"
             lenKey = fused.split(':')[0]; targetLen = lenKey.toInteger(); typeSel = new WeightedSelector([(fused.split(':')[1]): 1])
         }
@@ -910,7 +1128,7 @@ class Generator {
         while (generatedCount < cfg.count) {
             if (cfg.sentenceStatsFile) {
                 Segment root = generateStructure("SENTENCE", 0)
-                root.terminator = transitionSel["TERM"]?.select(Globals.RND) ?: "."
+                root.terminator = transitionSel?.select(Globals.RND) ?: "."
 
                 String output = renderSegment(root, cfg, stats)
                 output = Utils.smartCaps(output)
@@ -951,7 +1169,9 @@ def cfg = parseArgs(args)
 
 if (!cfg.valid) {
     println "❌ Error: ${cfg.error}"
-    println "Usage: groovy script.groovy -a -f input.txt -w words.json [-s sentences.json] OR -g ..."
+    println "Usage: groovy script.groovy -a -f input.txt -w words.json [-s sentences.json] [-q {1|2}] OR -g ..."
+    println "  -q 1: Strict single-quote validation (parser-level)"
+    println "  -q 2: Simple tokenizer-level single-quote handling (default)"
     System.exit(1)
 }
 println cfg.toString()
