@@ -1,4 +1,3 @@
-name
 Oliver
 Emil
 Noah
@@ -70,7 +69,6 @@ Albert
 David
 Alexander
 Leander
-Muhammad
 Jesper
 Edvard
 Linus
@@ -98,7 +96,6 @@ Thomas
 Victor
 Trym
 Kristian
-Mohammad
 Aleksander
 Luka
 Philip
@@ -129,7 +126,6 @@ Otto
 Trygve
 Bo
 Konrad
-Mohammed
 Noel
 Dennis
 Eivind
@@ -138,7 +134,6 @@ John
 Matteo
 Omar
 Wilhelm
-Ibrahim
 Emilian
 Milan
 Milian
@@ -239,7 +234,6 @@ Bernard
 Hamza
 Josef
 Leonel
-Mohamed
 Varg
 Younes
 Yusuf
@@ -250,7 +244,6 @@ Gaute
 Imre
 Jone
 Milo
-Mustafa
 Olve
 Vegard
 Yahya
@@ -344,7 +337,6 @@ Isac
 Ivo
 Lorentz
 Matheus
-Muhammed
 Neo
 Robert
 Rolf
@@ -364,7 +356,6 @@ Frikk
 Joar
 Joshua
 Karim
-Khalid
 Kjell
 Marcel
 Odd
@@ -389,7 +380,6 @@ Torje
 Torvald
 Wiktor
 Zakaria
-Abdul
 Adem
 Bruno
 Damir
@@ -401,7 +391,6 @@ Halvard
 Henryk
 Hubert
 Jarle
-Khaled
 Marko
 Matteus
 Mattias
@@ -416,7 +405,6 @@ Troy
 Vidar
 Zain
 Øystein
-Abdullahi
 Abraham
 Arn
 Ayub
@@ -426,14 +414,12 @@ Hallvard
 Hermann
 Jack
 Konstantin
-Mahmoud
 Mikail
 Niels
 Nikolas
 Osman
 Tomas
 Willy
-Abdullah
 Anas
 Armin
 Asbjørn
@@ -493,7 +479,6 @@ Joseph
 Kacper
 Martinus
 Matas
-Mohamad
 Nicklas
 Roman
 Rune

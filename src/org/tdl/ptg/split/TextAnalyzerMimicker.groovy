@@ -59,12 +59,32 @@ class Utils {
 
     static String smartCaps(String s) {
         if (!s) return s
-        def m = (s =~ /[a-zA-Z]/)
-        if (m.find()) {
-            int idx = m.start()
-            return s.substring(0, idx) + s.substring(idx, idx+1).toUpperCase() + s.substring(idx+1)
+
+        // Check if string starts with ANSI escape codes
+        def ansiPattern = ~/^\u001B\[[0-9;]+m/
+        def ansiMatch = (s =~ ansiPattern)
+
+        if (ansiMatch.find()) {
+            // Has ANSI prefix - preserve it and capitalize the first letter after it
+            def prefix = ansiMatch.group()
+            def rest = s.substring(prefix.length())
+
+            // Find first letter in the rest
+            def m = (rest =~ /[a-zA-Z]/)
+            if (m.find()) {
+                int idx = m.start()
+                return prefix + rest.substring(0, idx) + rest.substring(idx, idx+1).toUpperCase() + rest.substring(idx+1)
+            }
+            return s
+        } else {
+            // No ANSI codes - simple capitalization
+            def m = (s =~ /[a-zA-Z]/)
+            if (m.find()) {
+                int idx = m.start()
+                return s.substring(0, idx) + s.substring(idx, idx+1).toUpperCase() + s.substring(idx+1)
+            }
+            return s
         }
-        return s
     }
 }
 
@@ -456,17 +476,19 @@ class Parser {
 class Config {
     boolean analyze = false
     boolean generate = false
-    boolean markingMode = false
+    boolean bracketMode = false  // -m: bracket fallbacks
+    boolean colorMode = false    // -c: color by generation method
     boolean lineOutput = false
     boolean debug = false
     String wordStatsFile = null
     String sentenceStatsFile = null
     String f_File = null
-    boolean uniqueMode = false
+    boolean vocabFilter = false  // -v: vocabulary filtering
+    boolean uppercaseMode = false  // -u: uppercase first char
     int pruneMinTokens = 0
-    int ngramMode = 3
+    int ngramMode = 1  // Default to unigram
     int quoteMode = 2  // Default to mode 2 (simpler)
-    int count = 20
+    int itemCount = 20  // Renamed from 'count'
     boolean valid = false
     String error = ""
 
@@ -477,22 +499,28 @@ class Config {
 Input File        : ${f_File}
 Word Stats Out    : ${wordStatsFile}
 Sentence Stats Out: ${sentenceStatsFile ?: '(None)'}
-Unique Mode       : ${uniqueMode ? 'Active (Saving vocabulary list)' : 'Inactive'}
+Vocab Filter      : ${vocabFilter ? 'Active (Saving vocabulary list)' : 'Inactive'}
 Quote Mode        : ${quoteMode} (${quoteMode == 1 ? 'Strict Validation' : 'Simple Tokenizer'})
 Debug Mode        : ${debug ? 'Active (Printing Parse Tree)' : 'Inactive'}
 =============================="""
         } else {
+            def markingDesc = []
+            if (bracketMode) markingDesc << 'Fallback Brackets'
+            if (colorMode) markingDesc << 'N-Gram Coloring'
+            def markingStr = markingDesc.isEmpty() ? 'Inactive' : markingDesc.join(' + ')
+            def uppercaseDesc = uppercaseMode ? 'Active (Capitalize First Char)' : 'Inactive'
             return """
 === GENERATION CONFIGURATION ===
 Word Stats In     : ${wordStatsFile}
 Sentence Stats In : ${sentenceStatsFile ?: '(None) - Word List Mode'}
 Output File       : ${f_File ?: 'STDOUT'}
 Output Format     : ${lineOutput ? 'Line-by-Line (-l)' : 'Space-Separated (Default)'}
-N-Gram Mode       : ${ngramMode} (Initial Target)
-Unique Mode       : ${uniqueMode ? 'Active (Fallback: Tri->Bi->Uni)' : 'Inactive'}
-Marking Mode      : ${markingMode ? 'Active (-m)' : 'Inactive'}
+N-Gram Mode       : ${ngramMode} (${ ngramMode == 1 ? 'Unigram - Default' : ngramMode == 2 ? 'Bigram (-b)' : 'Trigram (-t)'})
+Vocab Filter      : ${vocabFilter ? 'Active (Fallback: Tri->Bi->Uni)' : 'Inactive'}
+Uppercase Mode    : ${uppercaseDesc}
+Marking Mode      : ${markingStr}
 Prune Mode        : ${pruneMinTokens > 0 ? "Active (excluding ≤ ${pruneMinTokens} tokens)" : 'Inactive'}
-Count             : ${count}
+Item Count        : ${itemCount}
 ================================"""
         }
     }
@@ -500,31 +528,43 @@ Count             : ${count}
 
 def parseArgs(String[] args) {
     def cfg = new Config()
+
+    // Handle help flag first
+    if (args.length == 0 || args.contains('-h') || args.contains('--help')) {
+        cfg.error = "Help requested"
+        return cfg
+    }
+
     def i = 0
     while (i < args.length) {
         def arg = args[i]
         switch (arg) {
             case '-a': cfg.analyze = true; break
             case '-g': cfg.generate = true; break
-            case '-m': cfg.markingMode = true; break
+            case '-m': cfg.bracketMode = true; break  // Bracket fallbacks
+            case '-c': cfg.colorMode = true; break    // Color by n-gram
             case '-l': cfg.lineOutput = true; break
             case '-d': cfg.debug = true; break
             case '-w': cfg.wordStatsFile = args[++i]; break
             case '-s': cfg.sentenceStatsFile = args[++i]; break
             case '-f': cfg.f_File = args[++i]; break
-            case '-u': cfg.uniqueMode = true; break
+            case '-v': cfg.vocabFilter = true; break  // Vocab filter
+            case '-u': cfg.uppercaseMode = true; break  // Uppercase mode
             case '-p': cfg.pruneMinTokens = args[++i].toInteger(); break
-            case '-c': cfg.count = args[++i].toInteger(); break
+            case '-n': cfg.itemCount = args[++i].toInteger(); break  // Renamed from -c
             case '-q': cfg.quoteMode = args[++i].toInteger(); break
-            case '-1': cfg.ngramMode = 1; break
-            case '-2': case '-b': cfg.ngramMode = 2; break
-            case '-3': case '-t': cfg.ngramMode = 3; break
+            case '-b': cfg.ngramMode = 2; break  // Bigram
+            case '-t': cfg.ngramMode = 3; break  // Trigram
+            default:
+                cfg.error = "Unknown option: ${arg}"
+                return cfg
         }
         i++
     }
     if (cfg.analyze && cfg.generate) { cfg.error = "Ambiguous Mode: Select either -a or -g."; return cfg }
     if (!cfg.analyze && !cfg.generate) { cfg.error = "No Mode Specified: Use -a or -g."; return cfg }
     if (cfg.quoteMode != 1 && cfg.quoteMode != 2) { cfg.error = "Invalid quote mode: Use -q 1 or -q 2."; return cfg }
+    if (cfg.uppercaseMode && cfg.sentenceStatsFile) { cfg.error = "Uppercase mode (-u) only valid in word list mode (no -s)."; return cfg }
     cfg.valid = true
     return cfg
 }
@@ -714,7 +754,7 @@ class Analyzer {
             def struct = Utils.tokenizeStructure(tok.text)
             if (struct) {
                 wordsProcessed++
-                if (cfg.uniqueMode) vocabulary.add(clean)
+                if (cfg.vocabFilter) vocabulary.add(clean)
                 def len = struct.size()
                 def effLen = Math.min(len, Globals.MAX_EFF_LEN).toString()
                 def startType = struct[0][0]
@@ -768,7 +808,7 @@ class Analyzer {
                 trigramInner: trigramInner.collectEntries { k, v -> [k, v.collectEntries { k2, v2 -> [k2, v2] }] },
                 trigramLast: trigramLast.collectEntries { k, v -> [k, v.collectEntries { k2, v2 -> [k2, v2] }] }
         ]
-        if (cfg.uniqueMode) wordData.vocabulary = vocabulary.toList()
+        if (cfg.vocabFilter) wordData.vocabulary = vocabulary.toList()
 
         new File(cfg.wordStatsFile).write(JsonOutput.prettyPrint(JsonOutput.toJson(wordData)))
         println "💾 Saved word stats to ${cfg.wordStatsFile}"
@@ -1013,15 +1053,35 @@ class Generator {
         return tokens.join('')
     }
 
-    String formatMarkedWord(String w, int startMode, int actualMode, boolean forced) {
-        if (forced) return "[${w}]"
-        if (startMode == 3) {
-            if (actualMode == 2) return "<${w}>"
-            if (actualMode == 1) return "{${w}}"
-        } else if (startMode == 2) {
-            if (actualMode == 1) return "{${w}}"
+    String formatMarkedWord(String w, Config cfg, int startMode, int actualMode, boolean forced) {
+        String result = w
+
+        // Apply bracketing if enabled (shows fallbacks only)
+        if (cfg.bracketMode) {
+            if (forced) {
+                result = "[${result}]"  // Vocabulary word
+            } else if (actualMode < startMode) {
+                // Only bracket if we fell back to a lower n-gram level
+                if (actualMode == 2) result = "<${result}>"  // Fell back to bigram
+                else if (actualMode == 1) result = "{${result}}"  // Fell back to unigram
+            }
         }
-        return w
+
+        // Apply coloring if enabled (shows generation method for ALL words)
+        if (cfg.colorMode) {
+            def BLUE = "\u001B[34m"      // Trigram
+            def GREEN = "\u001B[32m"     // Bigram
+            def ORANGE = "\u001B[38;5;208m"  // Unigram
+            def RED = "\u001B[31m"       // Vocabulary word
+            def RESET = "\u001B[0m"
+
+            if (forced) result = "${RED}${result}${RESET}"
+            else if (actualMode == 3) result = "${BLUE}${result}${RESET}"
+            else if (actualMode == 2) result = "${GREEN}${result}${RESET}"
+            else if (actualMode == 1) result = "${ORANGE}${result}${RESET}"
+        }
+
+        return result
     }
 
     String generateAndProcessWord(int len, Config cfg, Map stats) {
@@ -1030,7 +1090,7 @@ class Generator {
         String w = generateWord(len, currentMode)
         boolean forced = false
 
-        if (cfg.uniqueMode && loadedVocabulary) {
+        if (cfg.vocabFilter && loadedVocabulary) {
             int retries = 0
             while (loadedVocabulary.contains(w)) {
                 stats.filteredCount++
@@ -1042,19 +1102,41 @@ class Generator {
             }
         }
 
-        if (cfg.markingMode) {
-            return formatMarkedWord(w, startMode, currentMode, forced)
+        // Apply marking modes if enabled
+        if (cfg.bracketMode || cfg.colorMode) {
+            w = formatMarkedWord(w, cfg, startMode, currentMode, forced)
         }
+
+        // Apply uppercase mode if enabled (only for word list mode)
+        if (cfg.uppercaseMode && !cfg.sentenceStatsFile && w.length() > 0) {
+            // Strip ANSI codes if present, capitalize, then re-add
+            def ansiPattern = ~/\u001B\[[0-9;]+m/
+            def matches = (w =~ ansiPattern)
+            if (matches.size() > 0) {
+                // Has ANSI codes - preserve them
+                def prefix = matches[0]
+                def rest = w.substring(prefix.length())
+                if (rest.length() > 0) {
+                    rest = rest[0].toUpperCase() + (rest.length() > 1 ? rest.substring(1) : "")
+                }
+                w = prefix + rest
+            } else {
+                // No ANSI codes - simple capitalize
+                w = w[0].toUpperCase() + (w.length() > 1 ? w.substring(1) : "")
+            }
+        }
+
         return w
     }
 
     String renderSegment(Segment seg, Config cfg, Map stats) {
         def sb = new StringBuilder()
 
+        // Add opening punctuation normally - it will be uncolored
         if (seg.type == 'QUOTE') sb.append('"')
         else if (seg.type == 'SQUOTE') sb.append("'")
         else if (seg.type == 'PAREN') sb.append("(")
-        else if (seg.type == 'DASH') sb.append("\u2014")
+        else if (seg.type == 'DASH') sb.append(" \u2014 ")  // Space before and after opening dash
 
         def childIdx = 0
         def sortedChildren = seg.children.sort { it.childInsertPosition }
@@ -1077,7 +1159,29 @@ class Generator {
 
             String w = generateAndProcessWord(len, cfg, stats)
             if (i == 0 && (seg.type == 'SENTENCE' || seg.type == 'QUOTE')) w = Utils.smartCaps(w)
-            sb.append(w).append(' ')
+
+            boolean isLastWord = (i == seg.wordLengths.size() - 1)
+
+            // For the last word in QUOTE/SQUOTE/PAREN, handle closing punctuation
+            if (isLastWord && (seg.type == 'QUOTE' || seg.type == 'SQUOTE' || seg.type == 'PAREN')) {
+                // If word has ANSI codes, insert closing punctuation AFTER the reset code
+                if (cfg.colorMode && w.contains("\u001B[0m")) {
+                    def resetIdx = w.lastIndexOf("\u001B[0m")
+                    def closePunct = seg.type == 'QUOTE' ? '"' : seg.type == 'SQUOTE' ? "'" : ")"
+                    // Append: colored word + reset code + uncolored punctuation
+                    sb.append(w.substring(0, resetIdx + 4))  // Include the \u001B[0m (4 chars)
+                    sb.append(closePunct)                     // Closing punctuation (uncolored)
+                    sb.append(w.substring(resetIdx + 4))     // Any remaining content
+                    // Add terminator if present
+                    if (seg.terminator) sb.append(seg.terminator)
+                    // Don't add space or process closing punctuation again later
+                    seg.type = 'DONE'  // Mark as handled
+                } else {
+                    sb.append(w).append(' ')
+                }
+            } else {
+                sb.append(w).append(' ')
+            }
         }
 
         while (childIdx < sortedChildren.size()) {
@@ -1091,6 +1195,7 @@ class Generator {
 
         if (sb.length() > 0 && sb.charAt(sb.length() - 1) == ' ') sb.setLength(sb.length() - 1)
 
+        // Only add closing punctuation if not already handled inline
         if (seg.type == 'QUOTE') {
             if (seg.terminator) sb.append(seg.terminator)
             sb.append('"')
@@ -1104,19 +1209,26 @@ class Generator {
             if (seg.terminator) sb.append(seg.terminator)
         }
         else if (seg.type == 'DASH') {
-            if (seg.terminator) sb.append(seg.terminator)
-            else sb.append("\u2014")
+            // Only add closing dash if there's no terminator (paired aside dash)
+            // If there's a terminator, it means we're at sentence end - don't add closing dash
+            if (!seg.terminator) {
+                sb.append(" \u2014")  // Space before closing dash
+            } else {
+                // Add the terminator directly (it's really a sentence terminator, not dash-specific)
+                sb.append(seg.terminator)
+            }
         }
         else if (seg.type == 'SENTENCE') {
             if (seg.terminator) sb.append(seg.terminator)
         }
+        // 'DONE' type means closing punctuation was already handled inline - skip it
 
         return sb.toString()
     }
 
     void execute(Config cfg) {
-        if (cfg.uniqueMode && !loadedVocabulary) { println "❌ Error: Unique Mode requires vocabulary."; System.exit(1) }
-        if (cfg.uniqueMode) println "✨ Unique Filter: ${loadedVocabulary.size()} words loaded."
+        if (cfg.vocabFilter && !loadedVocabulary) { println "❌ Error: Vocab Filter requires vocabulary."; System.exit(1) }
+        if (cfg.vocabFilter) println "✨ Vocab Filter: ${loadedVocabulary.size()} words loaded."
 
         PrintStream outStream = System.out
         if (cfg.f_File) { outStream = new PrintStream(new File(cfg.f_File)); println "✍️  Writing to file: ${cfg.f_File}" }
@@ -1125,7 +1237,7 @@ class Generator {
         int generatedCount = 0
         def stats = [filteredCount: 0, forcedCount: 0]
 
-        while (generatedCount < cfg.count) {
+        while (generatedCount < cfg.itemCount) {
             if (cfg.sentenceStatsFile) {
                 Segment root = generateStructure("SENTENCE", 0)
                 root.terminator = transitionSel?.select(Globals.RND) ?: "."
@@ -1153,12 +1265,111 @@ class Generator {
         if (cfg.f_File) outStream.close()
         println ""
         println "=" * 60
-        if (cfg.uniqueMode) {
+        if (cfg.vocabFilter) {
             println "🔒 Filtered ${stats.filteredCount} duplicates."
             if (stats.forcedCount > 0) println "⚠️  Forced to accept ${stats.forcedCount} real words."
         }
         println "✅ Done."
     }
+}
+
+// ----------------------------------------------------------------
+// --- USAGE / HELP ---
+// ----------------------------------------------------------------
+
+def printUsage() {
+    println """
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   Text Analyzer & Mimicker Tool                            ║
+║             Statistical text analysis and generation tool                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+USAGE:
+  Analysis Mode:
+    groovy TextAnalyzerMimicker.groovy -a -f <input.txt> -w <words.json> [OPTIONS]
+  
+  Generation Mode:
+    groovy TextAnalyzerMimicker.groovy -g -w <words.json> [OPTIONS]
+
+MODES:
+  -a                  Analysis mode - analyze input text and build statistical model
+  -g                  Generation mode - generate text from statistical model
+  -h, --help          Display this help message
+
+ANALYSIS MODE OPTIONS:
+  -f <file>           Input text file to analyze (required)
+  -w <file>           Output word statistics JSON file (required)
+  -s <file>           Output sentence/rhythm statistics JSON file (optional)
+  -v                  Vocab filter mode - save vocabulary list for duplicate filtering
+  -q {1|2}            Quote handling mode (default: 2)
+                        1 = Strict validation (parser-level, rejects invalid quotes)
+                        2 = Simple tokenizer (uppercase heuristic for contractions)
+  -d                  Debug mode - print parse tree during analysis
+
+GENERATION MODE OPTIONS:
+  -w <file>           Input word statistics JSON file (required)
+  -s <file>           Input sentence/rhythm statistics JSON file (optional)
+                      If omitted, generates word list only
+  -f <file>           Output file (optional, default: STDOUT)
+  -n <count>          Number of items to generate (default: 20)
+  -l                  Line-by-line output format (default: space-separated)
+  
+  N-Gram Mode:
+    (default)           Unigram mode (character frequency only)
+    -b                  Bigram mode (2-character sequences)
+    -t                  Trigram mode (3-character sequences)
+  
+  Filtering Options:
+    -v                Vocab filter - avoid duplicating vocabulary from analysis
+                      (requires -v flag was used during analysis)
+    -p <n>            Prune mode - exclude words with ≤ n tokens from model
+                      Example: -p 3 generates only words with 4+ tokens
+  
+  Display Options:
+    -u                Uppercase - capitalize first character of each word
+                      (only valid in word list mode, not with -s)
+    -m                Fallback brackets - mark n-gram fallbacks with brackets
+                      <word> = fell back to bigram from trigram target
+                      {word} = fell back to unigram
+                      [word] = forced to use vocabulary word (duplicate)
+    -c                N-gram coloring - color words by generation method
+                      Blue   = trigram (3-char sequences)
+                      Green  = bigram (2-char sequences)
+                      Orange = unigram (1-char frequency)
+                      Red    = vocabulary word (duplicate)
+    
+    NOTE: -m and -c can be combined for both brackets and colors
+
+EXAMPLES:
+  Analyze a text file with vocabulary saving:
+    groovy TextAnalyzerMimicker.groovy -a -f input.txt -w words.json -s sentences.json -v
+
+  Generate 50 unique words (4+ tokens), capitalized, using trigram mode:
+    groovy TextAnalyzerMimicker.groovy -g -w words.json -v -n 50 -l -p 3 -u -t
+
+  Generate with color-coded n-gram levels (unigram default):
+    groovy TextAnalyzerMimicker.groovy -g -w words.json -n 30 -c
+
+  Generate with both brackets (fallbacks) and colors (all words), trigram mode:
+    groovy TextAnalyzerMimicker.groovy -g -w words.json -n 30 -m -c -t
+
+  Generate sentences with fallback brackets, bigram mode:
+    groovy TextAnalyzerMimicker.groovy -g -w words.json -s sentences.json -b -n 10 -m
+
+  Generate to file with all features:
+    groovy TextAnalyzerMimicker.groovy -g -w words.json -f output.txt -v -u -n 100 -p 4 -c
+
+NOTES:
+  - Analysis creates statistical models from input text
+  - Word model captures character patterns and token structure
+  - Sentence model (optional) captures rhythm, punctuation, and structure
+  - Vocab filter (-v) requires vocabulary saved during analysis
+  - Prune mode filters the statistical model at load time for efficiency
+  - Fallback brackets (-m) show only when generator had to fall back
+  - N-gram coloring (-c) shows how ALL words were generated, regardless of target
+  - Both marking modes can be combined for maximum visibility
+  - Uppercase mode only works in word list mode (no -s sentence file)
+"""
 }
 
 // ----------------------------------------------------------------
@@ -1168,10 +1379,10 @@ class Generator {
 def cfg = parseArgs(args)
 
 if (!cfg.valid) {
-    println "❌ Error: ${cfg.error}"
-    println "Usage: groovy script.groovy -a -f input.txt -w words.json [-s sentences.json] [-q {1|2}] OR -g ..."
-    println "  -q 1: Strict single-quote validation (parser-level)"
-    println "  -q 2: Simple tokenizer-level single-quote handling (default)"
+    if (cfg.error != "Help requested") {
+        println "❌ Error: ${cfg.error}\n"
+    }
+    printUsage()
     System.exit(1)
 }
 println cfg.toString()
