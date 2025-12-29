@@ -59,7 +59,6 @@ class Utils {
 
     static String smartCaps(String s) {
         if (!s) return s
-
         StringBuilder sb = new StringBuilder(s)
         boolean inAnsi = false
 
