@@ -60,31 +60,34 @@ class Utils {
     static String smartCaps(String s) {
         if (!s) return s
 
-        // Check if string starts with ANSI escape codes
-        def ansiPattern = ~/^\u001B\[[0-9;]+m/
-        def ansiMatch = (s =~ ansiPattern)
+        StringBuilder sb = new StringBuilder(s)
+        boolean inAnsi = false
 
-        if (ansiMatch.find()) {
-            // Has ANSI prefix - preserve it and capitalize the first letter after it
-            def prefix = ansiMatch.group()
-            def rest = s.substring(prefix.length())
+        for (int i = 0; i < sb.length(); i++) {
+            char c = sb.charAt(i)
 
-            // Find first letter in the rest
-            def m = (rest =~ /[a-zA-Z]/)
-            if (m.find()) {
-                int idx = m.start()
-                return prefix + rest.substring(0, idx) + rest.substring(idx, idx+1).toUpperCase() + rest.substring(idx+1)
+            // Detect start of ANSI sequence
+            if (c == '\u001B') {
+                inAnsi = true
+                continue
             }
-            return s
-        } else {
-            // No ANSI codes - simple capitalization
-            def m = (s =~ /[a-zA-Z]/)
-            if (m.find()) {
-                int idx = m.start()
-                return s.substring(0, idx) + s.substring(idx, idx+1).toUpperCase() + s.substring(idx+1)
+
+            if (inAnsi) {
+                // ANSI SGR sequences end with 'm' (usually)
+                // We blindly skip everything until we hit the terminator
+                if (c == 'm') {
+                    inAnsi = false
+                }
+                continue
             }
-            return s
+
+            // Found a visible letter? Capitalize and stop.
+            if (Character.isLetter(c)) {
+                sb.setCharAt(i, Character.toUpperCase(c))
+                break
+            }
         }
+        return sb.toString()
     }
 }
 
